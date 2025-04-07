@@ -61,35 +61,40 @@ const AROverlay: React.FC<AROverlayProps> = ({
     }
   };
 
-  // For the Turkish price tag, position the overlay with an arrow pointing to the original price
+  // Precisely position the overlay based on the price tag type
   const getOverlayPosition = () => {
-    // The position is offset to not overlap with the price
+    // For Turkish price tag (TRY)
     if (originalCurrency === 'TRY') {
       return {
-        top: '30%',
-        left: '70%',
+        top: '60%',  // Move down to be directly over the price area
+        right: '10%', // Position from right instead of left for better visibility
+        transform: 'translate(0, -50%)'
       };
     }
+    
     // Default position for other tags
     return {
-      top: '30%',
-      left: '70%',
+      top: '50%',
+      right: '10%',
+      transform: 'translate(0, -50%)'
     };
   };
 
-  // Arrow position - points to the original price
+  // Position the arrow to point directly at the price
   const getArrowPosition = () => {
     if (originalCurrency === 'TRY') {
       return {
-        top: '45%',
-        left: '40%',
-        transform: 'rotate(45deg)' // angle the arrow toward the price
+        top: '39%',    // Precisely target the price in the Turkish price tag
+        right: '30%',  // Position from right side
+        transform: 'rotate(-45deg) scale(1.2)' // Angled toward the price and slightly larger
       };
     }
+    
+    // Default arrow position
     return {
-      top: '45%',
-      left: '40%',
-      transform: 'rotate(45deg)'
+      top: '50%',
+      right: '30%',
+      transform: 'rotate(-45deg)'
     };
   };
 
@@ -102,25 +107,47 @@ const AROverlay: React.FC<AROverlayProps> = ({
           className="w-full h-full object-contain"
         />
         
+        {/* AR Scanning effect - horizontal line that moves up and down */}
+        {isMounted && (
+          <div className="absolute inset-0 pointer-events-none overflow-hidden">
+            <motion.div
+              className="absolute left-0 right-0 h-[2px] bg-blue-400/60"
+              style={{ boxShadow: '0 0 10px 2px rgba(59, 130, 246, 0.6)' }}
+              animate={{
+                top: ['0%', '100%', '0%'],
+              }}
+              transition={{
+                duration: 3,
+                repeat: Infinity,
+                ease: "linear"
+              }}
+            />
+          </div>
+        )}
+        
         {/* AR overlay elements */}
         {isMounted && (
           <>
             {/* Animated pointer arrow */}
             <motion.div
               initial={{ opacity: 0, scale: 0.5 }}
-              animate={{ opacity: 1, scale: 1 }}
+              animate={{ 
+                opacity: 1, 
+                scale: [1, 1.2, 1],
+              }}
               transition={{ 
-                duration: 0.5,
+                duration: 1.5,
                 repeat: Infinity,
                 repeatType: "reverse",
-                repeatDelay: 0.5
               }}
               className="absolute z-10"
               style={getArrowPosition()}
             >
               <ArrowDown 
                 className="h-10 w-10 text-primary drop-shadow-lg" 
-                style={{ filter: "drop-shadow(0 0 8px rgba(255,255,255,0.7))" }}
+                style={{ 
+                  filter: "drop-shadow(0 0 8px rgba(59, 130, 246, 0.8))" 
+                }}
               />
             </motion.div>
             
@@ -134,23 +161,43 @@ const AROverlay: React.FC<AROverlayProps> = ({
                 type: "spring",
                 stiffness: 100
               }}
-              className="absolute"
+              className="absolute z-20"
               style={getOverlayPosition()}
             >
-              <div className="ar-overlay p-3 min-w-[150px] bg-gradient-to-br from-primary/80 to-primary/40 rounded-lg backdrop-blur-md border border-white/30 shadow-xl">
+              <div className="ar-overlay p-4 min-w-[180px] bg-gradient-to-br from-primary/90 to-primary/60 rounded-lg backdrop-blur-md border border-white/30 shadow-xl">
                 <div className="text-center">
-                  <div className="text-white/80 text-sm mb-1">
+                  <div className="text-white/90 text-sm mb-1 font-medium">
                     Converted from:
                   </div>
-                  <div className="line-through text-white/90 text-lg font-semibold">
+                  <motion.div 
+                    className="line-through text-white/90 text-lg font-semibold"
+                    animate={{ opacity: [0.7, 1, 0.7] }}
+                    transition={{ duration: 2, repeat: Infinity }}
+                  >
                     {formatCurrency(originalPrice, originalCurrency)}
-                  </div>
-                  <div className="text-white text-2xl font-bold mt-1">
+                  </motion.div>
+                  <motion.div 
+                    className="text-white text-2xl font-bold mt-1"
+                    animate={{ 
+                      textShadow: [
+                        "0 0 5px rgba(255,255,255,0.5)", 
+                        "0 0 10px rgba(255,255,255,0.8)", 
+                        "0 0 5px rgba(255,255,255,0.5)"
+                      ] 
+                    }}
+                    transition={{ duration: 2, repeat: Infinity }}
+                  >
                     {formatCurrency(convertedPrice, targetCurrency)}
-                  </div>
+                  </motion.div>
                 </div>
               </div>
             </motion.div>
+            
+            {/* Corner recognition markers - AR-style corner brackets */}
+            <div className="absolute top-0 left-0 w-12 h-12 border-t-2 border-l-2 border-primary opacity-80"></div>
+            <div className="absolute top-0 right-0 w-12 h-12 border-t-2 border-r-2 border-primary opacity-80"></div>
+            <div className="absolute bottom-0 left-0 w-12 h-12 border-b-2 border-l-2 border-primary opacity-80"></div>
+            <div className="absolute bottom-0 right-0 w-12 h-12 border-b-2 border-r-2 border-primary opacity-80"></div>
           </>
         )}
       </div>

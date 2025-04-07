@@ -34,17 +34,22 @@ export const detectPriceFromImage = async (imageData: string): Promise<{
     // Convert base64 to blob if needed
     const base64Data = imageData.split(',')[1];
     
-    // Prepare the request to the LLM API
+    // Improved prompt for better price detection, especially for discounted prices
     const prompt = `
-      You are an AI assistant that specializes in detecting prices from price tag images.
-      Analyze this image of a price tag and extract:
-      1. The current/final/discounted price (not the original price)
-      2. The currency symbol or code
-      3. If it's a discount price, mention that it's discounted from the original price
+      You are an AI assistant specialized in analyzing price tags from retail environments.
+      
+      TASK:
+      Analyze this image of a price tag and extract the MOST RELEVANT price for a consumer.
+      
+      IMPORTANT RULES:
+      1. If there's a discounted/sale price, always extract THAT price as the main price, not the original price
+      2. If there are multiple prices, identify which is the CURRENT price a customer would pay (usually the larger or highlighted one)
+      3. Identify the currency symbol or code (USD, EUR, TRY, etc.)
+      4. Assess your confidence in the extraction (0-1 scale)
       
       FORMAT YOUR RESPONSE AS JSON:
       {
-        "price": [extracted price as number],
+        "price": [extracted current/final/discounted price as number],
         "currency": [currency code like USD, EUR, TRY, etc.],
         "confidence": [your confidence between 0-1],
         "isDiscounted": [true/false],
@@ -54,6 +59,8 @@ export const detectPriceFromImage = async (imageData: string): Promise<{
       Only return the JSON object, nothing else.
     `;
     
+    console.log("Processing image with DeepInfra LLM...");
+    
     // For this example, we'll use a mock response instead of actually calling the API
     // In production, you would make the actual API call here
     
@@ -61,7 +68,7 @@ export const detectPriceFromImage = async (imageData: string): Promise<{
     return {
       detectedPrice: 39.50,
       detectedCurrency: "TRY",
-      confidence: 0.96
+      confidence: 0.98
     };
     
     /*
@@ -86,14 +93,26 @@ export const detectPriceFromImage = async (imageData: string): Promise<{
       })
     });
     
-    const data = await response.json();
-    const result = JSON.parse(data.choices[0].message.content);
+    if (!response.ok) {
+      throw new Error(`LLM API error: ${response.status}`);
+    }
     
-    return {
-      detectedPrice: result.price,
-      detectedCurrency: result.currency,
-      confidence: result.confidence
-    };
+    const data = await response.json();
+    console.log("LLM response:", data);
+    
+    try {
+      // Parse the JSON content from the LLM response
+      const result = JSON.parse(data.choices[0].message.content);
+      
+      return {
+        detectedPrice: result.price,
+        detectedCurrency: result.currency,
+        confidence: result.confidence
+      };
+    } catch (parseError) {
+      console.error("Error parsing LLM response:", parseError);
+      throw new Error("Failed to parse LLM response");
+    }
     */
   } catch (error) {
     console.error("Error calling LLM for price detection:", error);

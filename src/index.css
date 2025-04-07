@@ -100,10 +100,37 @@
     }
   }
   
-  /* New futuristic AR styles */
+  /* Enhanced futuristic AR styles */
   .ar-overlay {
     box-shadow: 0 0 15px rgba(59, 130, 246, 0.5);
     animation: pulseBorder 3s infinite alternate;
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .ar-overlay::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: linear-gradient(to bottom right, 
+                               rgba(59, 130, 246, 0) 0%, 
+                               rgba(59, 130, 246, 0.1) 50%, 
+                               rgba(59, 130, 246, 0) 100%);
+    transform: rotate(30deg);
+    animation: scanGlare 3s infinite linear;
+    pointer-events: none;
+  }
+  
+  @keyframes scanGlare {
+    0% {
+      transform: translateY(-100%) rotate(30deg);
+    }
+    100% {
+      transform: translateY(100%) rotate(30deg);
+    }
   }
   
   @keyframes pulseBorder {
@@ -138,6 +165,73 @@
     100% {
       height: 40px;
       opacity: 1;
+    }
+  }
+  
+  /* New AR recognition frame style */
+  .ar-recognition-frame {
+    position: relative;
+  }
+  
+  .ar-recognition-frame::before,
+  .ar-recognition-frame::after {
+    content: '';
+    position: absolute;
+    width: 15px;
+    height: 15px;
+    border: 2px solid rgba(59, 130, 246, 0.8);
+    animation: framePulse 2s infinite alternate;
+  }
+  
+  .ar-recognition-frame::before {
+    top: 0;
+    left: 0;
+    border-right: none;
+    border-bottom: none;
+  }
+  
+  .ar-recognition-frame::after {
+    bottom: 0;
+    right: 0;
+    border-left: none;
+    border-top: none;
+  }
+  
+  @keyframes framePulse {
+    0% {
+      opacity: 0.6;
+      box-shadow: 0 0 5px rgba(59, 130, 246, 0.3);
+    }
+    100% {
+      opacity: 1;
+      box-shadow: 0 0 10px rgba(59, 130, 246, 0.7);
+    }
+  }
+  
+  /* New data processing animation */
+  .ar-data-processing {
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .ar-data-processing::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 50%;
+    height: 100%;
+    background: linear-gradient(to right, transparent, rgba(59, 130, 246, 0.2), transparent);
+    animation: dataScan 2s infinite;
+    transform: skewX(-20deg);
+  }
+  
+  @keyframes dataScan {
+    0% {
+      left: -50%;
+    }
+    100% {
+      left: 150%;
     }
   }
 }
