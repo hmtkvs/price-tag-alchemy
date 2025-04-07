@@ -39,6 +39,7 @@ const CurrencySelector: React.FC<CurrencySelectorProps> = ({
     { value: "CNY", label: "Chinese Yuan (CNY)" },
     { value: "INR", label: "Indian Rupee (INR)" },
     { value: "BRL", label: "Brazilian Real (BRL)" },
+    { value: "TRY", label: "Turkish Lira (TRY)" },
   ];
 
   return (

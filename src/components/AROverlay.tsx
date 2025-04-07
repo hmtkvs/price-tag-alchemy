@@ -43,32 +43,62 @@ const AROverlay: React.FC<AROverlayProps> = ({
       case 'EUR': symbol = '€'; break;
       case 'GBP': symbol = '£'; break;
       case 'JPY': symbol = '¥'; break;
+      case 'TRY': symbol = '₺'; break;
       default: symbol = currency + ' ';
     }
     
-    return `${symbol}${value.toFixed(2)}`;
+    // Format with proper decimal places
+    const formattedValue = currency === 'JPY' 
+      ? Math.round(value).toString() 
+      : value.toFixed(2);
+      
+    // Place symbol before or after based on convention
+    if (['USD', 'EUR', 'GBP', 'JPY'].includes(currency)) {
+      return `${symbol}${formattedValue}`;
+    } else {
+      return `${formattedValue} ${symbol}`;
+    }
+  };
+
+  // For the Turkish price tag, position the overlay near the original price
+  const getOverlayPosition = () => {
+    // The position is set for the specific Turkish price tag
+    if (originalCurrency === 'TRY') {
+      return {
+        top: '58%',
+        left: '50%',
+        transform: 'translate(-50%, -50%)'
+      };
+    }
+    // Default center position for other tags
+    return {
+      top: '50%',
+      left: '50%',
+      transform: 'translate(-50%, -50%)'
+    };
   };
 
   return (
     <div className={cn("relative w-full", className)}>
-      <div className="w-full aspect-[4/3] relative overflow-hidden rounded-2xl border-2 border-primary/30 shadow-xl">
+      <div className="w-full aspect-auto relative overflow-hidden rounded-2xl border-2 border-primary/30 shadow-xl">
         <img 
           src={originalImage} 
           alt="Original price tag" 
-          className="w-full h-full object-cover"
+          className="w-full h-full object-contain"
         />
         
-        {/* AR overlay elements - position would be detected by ML in real app */}
+        {/* AR overlay elements */}
         {isMounted && (
           <motion.div 
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.5 }}
-            className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2"
+            className="absolute"
+            style={getOverlayPosition()}
           >
-            <div className="ar-overlay p-4 min-w-[150px] bg-gradient-to-br from-primary/40 to-secondary/40">
+            <div className="ar-overlay p-3 min-w-[150px] bg-gradient-to-br from-primary/70 to-secondary/70 rounded-lg backdrop-blur-sm border border-white/20 shadow-xl">
               <div className="text-center">
-                <div className="line-through text-white/70 text-lg font-semibold">
+                <div className="line-through text-white/80 text-lg font-semibold">
                   {formatCurrency(originalPrice, originalCurrency)}
                 </div>
                 <div className="text-white text-3xl font-bold">

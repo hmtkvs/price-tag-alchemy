@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { toast } from 'sonner';
@@ -31,7 +32,7 @@ const Index = () => {
     setCurrentStep(AppStep.PROCESSING);
     
     try {
-      // Call mock LLM API to detect price and currency
+      // Call LLM API to detect price and currency
       const result = await detectPriceFromImage(imageData);
       setDetectedPrice(result.detectedPrice);
       
@@ -64,6 +65,10 @@ const Index = () => {
     try {
       // Fetch currency rates
       const rates = await fetchCurrencyRates(source);
+      
+      if (!rates[target]) {
+        throw new Error(`No conversion rate found for ${target}`);
+      }
       
       // Calculate converted price
       const converted = convertCurrency(price, source, target, rates);
