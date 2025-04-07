@@ -6,10 +6,12 @@ import { Camera, RefreshCw, ArrowLeft } from "lucide-react";
 import CameraCapture from '@/components/Camera';
 import CurrencySelector from '@/components/CurrencySelector';
 import AROverlay from '@/components/AROverlay';
+import LandingPage from '@/components/LandingPage';
 import { detectPriceFromImage, fetchCurrencyRates, convertCurrency } from '@/services/apiService';
 
 enum AppStep {
   WELCOME,
+  LANDING,
   CAMERA,
   CURRENCY_SELECT,
   PROCESSING,
@@ -17,7 +19,7 @@ enum AppStep {
 }
 
 const Index = () => {
-  const [currentStep, setCurrentStep] = useState<AppStep>(AppStep.WELCOME);
+  const [currentStep, setCurrentStep] = useState<AppStep>(AppStep.LANDING);
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
   const [sourceCurrency, setSourceCurrency] = useState<string>("");
   const [targetCurrency, setTargetCurrency] = useState<string>("USD");
@@ -104,29 +106,36 @@ const Index = () => {
     setConvertedPrice(null);
     setSourceCurrency("");
     setTargetCurrency("USD");
-    setCurrentStep(AppStep.WELCOME);
+    setCurrentStep(AppStep.LANDING);
   };
 
   return (
     <div className="min-h-screen flex flex-col">
-      {/* Header */}
-      <header className="p-4 flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-primary">Price Tag Alchemy</h1>
-        {currentStep !== AppStep.WELCOME && (
-          <Button 
-            variant="outline" 
-            size="icon"
-            onClick={resetToWelcome}
-          >
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
-        )}
-      </header>
+      {/* Header - always visible except on landing page */}
+      {currentStep !== AppStep.LANDING && (
+        <header className="p-4 flex items-center justify-between backdrop-blur-md bg-background/80 border-b border-border/30 sticky top-0 z-50">
+          <h1 className="text-2xl font-bold text-primary">Price Tag Alchemy</h1>
+          {currentStep !== AppStep.WELCOME && (
+            <Button 
+              variant="outline" 
+              size="icon"
+              onClick={resetToWelcome}
+              className="rounded-full"
+            >
+              <ArrowLeft className="h-5 w-5" />
+            </Button>
+          )}
+        </header>
+      )}
       
       {/* Main content */}
-      <main className="flex-1 p-4 max-w-md mx-auto w-full">
+      <main className="flex-1">
+        {currentStep === AppStep.LANDING && (
+          <LandingPage onGetStarted={() => setCurrentStep(AppStep.CAMERA)} />
+        )}
+        
         {currentStep === AppStep.WELCOME && (
-          <div className="animate-fade-in flex flex-col items-center justify-center h-full">
+          <div className="animate-fade-in flex flex-col items-center justify-center h-full p-4 max-w-md mx-auto w-full">
             <div className="glass-panel p-8 mb-8 text-center">
               <h2 className="text-2xl font-bold mb-4">Welcome to Price Tag Alchemy</h2>
               <p className="mb-6 text-muted-foreground">
@@ -134,7 +143,7 @@ const Index = () => {
               </p>
               <Button 
                 onClick={() => setCurrentStep(AppStep.CAMERA)} 
-                className="w-full"
+                className="w-full glass-button"
                 size="lg"
               >
                 <Camera className="mr-2 h-5 w-5" />
@@ -145,28 +154,32 @@ const Index = () => {
         )}
         
         {currentStep === AppStep.CAMERA && (
-          <CameraCapture onCapture={handleImageCapture} />
+          <div className="p-4 max-w-md mx-auto w-full">
+            <CameraCapture onCapture={handleImageCapture} />
+          </div>
         )}
         
         {currentStep === AppStep.PROCESSING && (
-          <div className="animate-fade-in flex flex-col items-center justify-center py-12">
+          <div className="animate-fade-in flex flex-col items-center justify-center py-12 p-4 max-w-md mx-auto w-full">
             <RefreshCw className="h-12 w-12 text-primary animate-spin mb-4" />
             <p className="text-lg">Processing your image...</p>
           </div>
         )}
         
         {currentStep === AppStep.CURRENCY_SELECT && (
-          <CurrencySelector 
-            sourceCurrency={sourceCurrency}
-            targetCurrency={targetCurrency}
-            onSourceChange={setSourceCurrency}
-            onTargetChange={setTargetCurrency}
-            onContinue={handleCurrencySelectContinue}
-          />
+          <div className="p-4 max-w-md mx-auto w-full">
+            <CurrencySelector 
+              sourceCurrency={sourceCurrency}
+              targetCurrency={targetCurrency}
+              onSourceChange={setSourceCurrency}
+              onTargetChange={setTargetCurrency}
+              onContinue={handleCurrencySelectContinue}
+            />
+          </div>
         )}
         
         {currentStep === AppStep.RESULT && capturedImage && detectedPrice !== null && convertedPrice !== null && (
-          <div className="animate-fade-in">
+          <div className="animate-fade-in p-4">
             <AROverlay 
               originalImage={capturedImage}
               originalCurrency={sourceCurrency}
@@ -176,16 +189,16 @@ const Index = () => {
               conversionRate={conversionRate}
             />
             
-            <div className="mt-6 flex space-x-4">
+            <div className="mt-6 flex space-x-4 max-w-md mx-auto">
               <Button 
                 variant="outline" 
-                className="flex-1"
+                className="flex-1 glass-button"
                 onClick={() => setCurrentStep(AppStep.CURRENCY_SELECT)}
               >
                 Change Currency
               </Button>
               <Button 
-                className="flex-1"
+                className="flex-1 glass-button"
                 onClick={resetToCamera}
               >
                 New Scan
@@ -194,11 +207,6 @@ const Index = () => {
           </div>
         )}
       </main>
-      
-      {/* Footer */}
-      <footer className="p-4 text-center text-sm text-muted-foreground">
-        <p>Price Tag Alchemy © {new Date().getFullYear()}</p>
-      </footer>
     </div>
   );
 };
