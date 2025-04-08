@@ -12,6 +12,7 @@ interface AROverlayProps {
   convertedPrice: number;
   conversionRate: number;
   className?: string;
+  isLiveDetection?: boolean;
 }
 
 const AROverlay: React.FC<AROverlayProps> = ({
@@ -21,7 +22,8 @@ const AROverlay: React.FC<AROverlayProps> = ({
   originalPrice,
   convertedPrice,
   conversionRate,
-  className
+  className,
+  isLiveDetection = false
 }) => {
   const [imageSize, setImageSize] = useState({ width: 0, height: 0 });
   const [isMounted, setIsMounted] = useState(false);
@@ -67,16 +69,16 @@ const AROverlay: React.FC<AROverlayProps> = ({
     if (originalCurrency === 'TRY') {
       return {
         top: '60%',  // Move down to be directly over the price area
-        right: '10%', // Position from right instead of left for better visibility
-        transform: 'translate(0, -50%)'
+        left: '30%', // Position centered on the price tag
+        transform: 'translate(-50%, -50%)'
       };
     }
     
     // Default position for other tags
     return {
       top: '50%',
-      right: '10%',
-      transform: 'translate(0, -50%)'
+      left: '50%',
+      transform: 'translate(-50%, -50%)'
     };
   };
 
@@ -85,18 +87,93 @@ const AROverlay: React.FC<AROverlayProps> = ({
     if (originalCurrency === 'TRY') {
       return {
         top: '39%',    // Precisely target the price in the Turkish price tag
-        right: '30%',  // Position from right side
-        transform: 'rotate(-45deg) scale(1.2)' // Angled toward the price and slightly larger
+        left: '30%',  // Position centered on price
+        transform: 'rotate(0deg) scale(1.2)' // Point directly at price and slightly larger
       };
     }
     
     // Default arrow position
     return {
-      top: '50%',
-      right: '30%',
-      transform: 'rotate(-45deg)'
+      top: '35%',
+      left: '50%',
+      transform: 'rotate(0deg)'
     };
   };
+
+  const renderOverlayContent = () => (
+    <>
+      {/* Animated pointer arrow */}
+      <motion.div
+        initial={{ opacity: 0, scale: 0.5 }}
+        animate={{ 
+          opacity: 1, 
+          scale: [1, 1.2, 1],
+        }}
+        transition={{ 
+          duration: 1.5,
+          repeat: Infinity,
+          repeatType: "reverse",
+        }}
+        className="absolute z-10"
+        style={getArrowPosition()}
+      >
+        <ArrowDown 
+          className="h-10 w-10 text-primary drop-shadow-lg" 
+          style={{ 
+            filter: "drop-shadow(0 0 8px rgba(59, 130, 246, 0.8))" 
+          }}
+        />
+      </motion.div>
+      
+      {/* Price conversion display */}
+      <motion.div 
+        initial={{ opacity: 0, scale: 0.8, y: -20 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        transition={{ 
+          duration: 0.5,
+          delay: 0.2,
+          type: "spring",
+          stiffness: 100
+        }}
+        className="absolute z-20"
+        style={getOverlayPosition()}
+      >
+        <div className="ar-overlay p-4 min-w-[180px] bg-gradient-to-br from-black/70 to-primary/60 rounded-lg backdrop-blur-md border border-white/30 shadow-xl">
+          <div className="text-center">
+            <div className="text-white/90 text-sm mb-1 font-medium">
+              Converted from:
+            </div>
+            <motion.div 
+              className="line-through text-white/90 text-lg font-semibold"
+              animate={{ opacity: [0.7, 1, 0.7] }}
+              transition={{ duration: 2, repeat: Infinity }}
+            >
+              {formatCurrency(originalPrice, originalCurrency)}
+            </motion.div>
+            <motion.div 
+              className="text-white text-2xl font-bold mt-1"
+              animate={{ 
+                textShadow: [
+                  "0 0 5px rgba(255,255,255,0.5)", 
+                  "0 0 10px rgba(255,255,255,0.8)", 
+                  "0 0 5px rgba(255,255,255,0.5)"
+                ] 
+              }}
+              transition={{ duration: 2, repeat: Infinity }}
+            >
+              {formatCurrency(convertedPrice, targetCurrency)}
+            </motion.div>
+          </div>
+        </div>
+      </motion.div>
+      
+      {/* Corner recognition markers - AR-style corner brackets */}
+      <div className="absolute top-0 left-0 w-12 h-12 border-t-2 border-l-2 border-primary opacity-80"></div>
+      <div className="absolute top-0 right-0 w-12 h-12 border-t-2 border-r-2 border-primary opacity-80"></div>
+      <div className="absolute bottom-0 left-0 w-12 h-12 border-b-2 border-l-2 border-primary opacity-80"></div>
+      <div className="absolute bottom-0 right-0 w-12 h-12 border-b-2 border-r-2 border-primary opacity-80"></div>
+    </>
+  );
 
   return (
     <div className={cn("relative w-full", className)}>
@@ -126,102 +203,31 @@ const AROverlay: React.FC<AROverlayProps> = ({
         )}
         
         {/* AR overlay elements */}
-        {isMounted && (
-          <>
-            {/* Animated pointer arrow */}
-            <motion.div
-              initial={{ opacity: 0, scale: 0.5 }}
-              animate={{ 
-                opacity: 1, 
-                scale: [1, 1.2, 1],
-              }}
-              transition={{ 
-                duration: 1.5,
-                repeat: Infinity,
-                repeatType: "reverse",
-              }}
-              className="absolute z-10"
-              style={getArrowPosition()}
-            >
-              <ArrowDown 
-                className="h-10 w-10 text-primary drop-shadow-lg" 
-                style={{ 
-                  filter: "drop-shadow(0 0 8px rgba(59, 130, 246, 0.8))" 
-                }}
-              />
-            </motion.div>
-            
-            {/* Price conversion display */}
-            <motion.div 
-              initial={{ opacity: 0, scale: 0.8, y: -20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              transition={{ 
-                duration: 0.5,
-                delay: 0.2,
-                type: "spring",
-                stiffness: 100
-              }}
-              className="absolute z-20"
-              style={getOverlayPosition()}
-            >
-              <div className="ar-overlay p-4 min-w-[180px] bg-gradient-to-br from-primary/90 to-primary/60 rounded-lg backdrop-blur-md border border-white/30 shadow-xl">
-                <div className="text-center">
-                  <div className="text-white/90 text-sm mb-1 font-medium">
-                    Converted from:
-                  </div>
-                  <motion.div 
-                    className="line-through text-white/90 text-lg font-semibold"
-                    animate={{ opacity: [0.7, 1, 0.7] }}
-                    transition={{ duration: 2, repeat: Infinity }}
-                  >
-                    {formatCurrency(originalPrice, originalCurrency)}
-                  </motion.div>
-                  <motion.div 
-                    className="text-white text-2xl font-bold mt-1"
-                    animate={{ 
-                      textShadow: [
-                        "0 0 5px rgba(255,255,255,0.5)", 
-                        "0 0 10px rgba(255,255,255,0.8)", 
-                        "0 0 5px rgba(255,255,255,0.5)"
-                      ] 
-                    }}
-                    transition={{ duration: 2, repeat: Infinity }}
-                  >
-                    {formatCurrency(convertedPrice, targetCurrency)}
-                  </motion.div>
-                </div>
-              </div>
-            </motion.div>
-            
-            {/* Corner recognition markers - AR-style corner brackets */}
-            <div className="absolute top-0 left-0 w-12 h-12 border-t-2 border-l-2 border-primary opacity-80"></div>
-            <div className="absolute top-0 right-0 w-12 h-12 border-t-2 border-r-2 border-primary opacity-80"></div>
-            <div className="absolute bottom-0 left-0 w-12 h-12 border-b-2 border-l-2 border-primary opacity-80"></div>
-            <div className="absolute bottom-0 right-0 w-12 h-12 border-b-2 border-r-2 border-primary opacity-80"></div>
-          </>
-        )}
+        {isMounted && renderOverlayContent()}
       </div>
       
-      <div className="mt-4 glass-panel p-4">
-        <div className="flex justify-between items-center mb-2">
-          <span className="text-sm opacity-80">Original:</span>
-          <span className="font-semibold">
-            {formatCurrency(originalPrice, originalCurrency)}
-          </span>
+      {!isLiveDetection && (
+        <div className="mt-4 glass-panel p-4">
+          <div className="flex justify-between items-center mb-2">
+            <span className="text-sm opacity-80">Original:</span>
+            <span className="font-semibold">
+              {formatCurrency(originalPrice, originalCurrency)}
+            </span>
+          </div>
+          <div className="flex justify-between items-center mb-2">
+            <span className="text-sm opacity-80">Converted:</span>
+            <span className="font-semibold">
+              {formatCurrency(convertedPrice, targetCurrency)}
+            </span>
+          </div>
+          <div className="flex justify-between items-center text-sm">
+            <span className="opacity-80">Rate:</span>
+            <span>
+              1 {originalCurrency} = {conversionRate.toFixed(4)} {targetCurrency}
+            </span>
+          </div>
         </div>
-        <div className="flex justify-between items-center mb-2">
-          <span className="text-sm opacity-80">Converted:</span>
-          <span className="font-semibold">
-            {formatCurrency(convertedPrice, targetCurrency)}
-          </span>
-        </div>
-        <div className="flex justify-between items-center text-sm">
-          <span className="opacity-80">Rate:</span>
-          <span>
-            1 {originalCurrency} = {conversionRate.toFixed(4)} {targetCurrency}
-          </span>
-        </div>
-      </div>
+      )}
     </div>
   );
 };

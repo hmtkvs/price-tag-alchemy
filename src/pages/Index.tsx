@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { Button } from "@/components/ui/button";
 import { toast } from 'sonner';
 import { Camera, RefreshCw, ArrowLeft } from "lucide-react";
@@ -27,6 +27,12 @@ const Index = () => {
   const [convertedPrice, setConvertedPrice] = useState<number | null>(null);
   const [conversionRate, setConversionRate] = useState<number>(1);
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
+  const [isLiveDetection, setIsLiveDetection] = useState<boolean>(false);
+  const [liveDetectionData, setLiveDetectionData] = useState<{
+    image: string;
+    price: number;
+    currency: string;
+  } | null>(null);
 
   const handleImageCapture = async (imageData: string) => {
     setCapturedImage(imageData);
@@ -55,6 +61,44 @@ const Index = () => {
       setIsProcessing(false);
     }
   };
+
+  const handleLivePriceDetection = useCallback(async (imageData: string) => {
+    if (isProcessing) return; // Don't process if already processing
+    
+    try {
+      // Quick check for price detection
+      const result = await detectPriceFromImage(imageData);
+      
+      if (result.detectedPrice && result.detectedCurrency && result.confidence > 0.7) {
+        // Show live AR overlay
+        setLiveDetectionData({
+          image: imageData,
+          price: result.detectedPrice,
+          currency: result.detectedCurrency
+        });
+        
+        // Get conversion rate in background
+        fetchCurrencyRates(result.detectedCurrency).then(rates => {
+          const converted = convertCurrency(
+            result.detectedPrice, 
+            result.detectedCurrency, 
+            targetCurrency, 
+            rates
+          );
+          
+          setLiveDetectionData(prev => prev ? {
+            ...prev,
+            convertedPrice: converted,
+            convertedCurrency: targetCurrency,
+            conversionRate: rates[targetCurrency]
+          } : null);
+        });
+      }
+    } catch (error) {
+      console.error("Error in live detection:", error);
+      // Don't show error to user for live detection
+    }
+  }, [isProcessing, targetCurrency]);
 
   const proceedToConversion = async (source: string, target: string, price: number) => {
     if (!source || !target || price === null) {
@@ -97,6 +141,7 @@ const Index = () => {
     setCapturedImage(null);
     setDetectedPrice(null);
     setConvertedPrice(null);
+    setLiveDetectionData(null);
     setCurrentStep(AppStep.CAMERA);
   };
 
@@ -106,6 +151,7 @@ const Index = () => {
     setConvertedPrice(null);
     setSourceCurrency("");
     setTargetCurrency("USD");
+    setLiveDetectionData(null);
     setCurrentStep(AppStep.LANDING);
   };
 
@@ -114,13 +160,13 @@ const Index = () => {
       {/* Header - always visible except on landing page */}
       {currentStep !== AppStep.LANDING && (
         <header className="p-4 flex items-center justify-between backdrop-blur-md bg-background/80 border-b border-border/30 sticky top-0 z-50">
-          <h1 className="text-2xl font-bold text-primary">Price Tag Alchemy</h1>
+          <h1 className="text-2xl font-bold text-gradient-primary">Price Tag Alchemy</h1>
           {currentStep !== AppStep.WELCOME && (
             <Button 
               variant="outline" 
               size="icon"
               onClick={resetToWelcome}
-              className="rounded-full"
+              className="rounded-full bg-white/10 border-white/20 hover:bg-white/20"
             >
               <ArrowLeft className="h-5 w-5" />
             </Button>
@@ -143,7 +189,7 @@ const Index = () => {
               </p>
               <Button 
                 onClick={() => setCurrentStep(AppStep.CAMERA)} 
-                className="w-full glass-button"
+                className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-xl"
                 size="lg"
               >
                 <Camera className="mr-2 h-5 w-5" />
@@ -155,7 +201,11 @@ const Index = () => {
         
         {currentStep === AppStep.CAMERA && (
           <div className="p-4 max-w-md mx-auto w-full">
-            <CameraCapture onCapture={handleImageCapture} />
+            <CameraCapture 
+              onCapture={handleImageCapture} 
+              onPriceDetected={handleLivePriceDetection}
+              autoDetect={true}
+            />
           </div>
         )}
         
@@ -192,13 +242,13 @@ const Index = () => {
             <div className="mt-6 flex space-x-4 max-w-md mx-auto">
               <Button 
                 variant="outline" 
-                className="flex-1 glass-button"
+                className="flex-1 bg-white/10 backdrop-blur-md border border-white/20 text-foreground hover:bg-white/20"
                 onClick={() => setCurrentStep(AppStep.CURRENCY_SELECT)}
               >
                 Change Currency
               </Button>
               <Button 
-                className="flex-1 glass-button"
+                className="flex-1 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white"
                 onClick={resetToCamera}
               >
                 New Scan

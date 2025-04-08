@@ -86,7 +86,7 @@
   }
   
   .glass-button {
-    @apply bg-white/20 backdrop-blur-sm border border-white/30 text-white shadow-lg hover:bg-white/30 rounded-xl;
+    @apply bg-gradient-to-r from-black/30 to-primary/30 backdrop-blur-sm border border-white/30 text-white shadow-lg hover:bg-white/30 rounded-xl;
   }
   
   .text-gradient-primary {
@@ -302,5 +302,65 @@
     background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
     opacity: 0.05;
     pointer-events: none;
+  }
+  
+  /* New button styles */
+  .neo-button {
+    @apply bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-xl;
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .neo-button::after {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: linear-gradient(
+      to bottom right,
+      rgba(255, 255, 255, 0) 0%,
+      rgba(255, 255, 255, 0.1) 50%,
+      rgba(255, 255, 255, 0) 100%
+    );
+    transform: rotate(30deg);
+    animation: buttonGlare 3s infinite linear;
+  }
+  
+  @keyframes buttonGlare {
+    0% {
+      transform: translate(-100%, -100%) rotate(30deg);
+    }
+    100% {
+      transform: translate(50%, 50%) rotate(30deg);
+    }
+  }
+  
+  /* Live detection frame */
+  .live-detection-frame {
+    @apply rounded-xl overflow-hidden relative;
+    position: relative;
+  }
+  
+  .live-detection-frame::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border: 2px solid transparent;
+    background: linear-gradient(90deg, #3b82f6, #8b5cf6, #3b82f6) border-box;
+    mask: linear-gradient(#fff 0 0) padding-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    animation: borderRotate 4s linear infinite;
+  }
+  
+  @keyframes borderRotate {
+    from {
+      background-position: 0% center;
+    }
+    to {
+      background-position: 200% center;
+    }
   }
 }
