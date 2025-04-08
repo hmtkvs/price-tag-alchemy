@@ -33,7 +33,7 @@
     --input: 214.3 31.8% 91.4%;
     --ring: 221.2 83.2% 53.3%;
 
-    --radius: 0.5rem;
+    --radius: 0.75rem;
   }
 
   .dark {
@@ -71,6 +71,11 @@
   * {
     @apply border-border;
   }
+  
+  html {
+    -webkit-tap-highlight-color: transparent;
+  }
+  
   body {
     @apply bg-background text-foreground;
     background: radial-gradient(circle at top right, rgba(59, 130, 246, 0.05), transparent 40%),
@@ -78,9 +83,57 @@
                 linear-gradient(to bottom, transparent, rgba(6, 182, 212, 0.02) 80%);
     background-attachment: fixed;
   }
+  
+  /* Improved button base styles for touch targets */
+  button, 
+  .button,
+  [role="button"],
+  a.button,
+  input[type="button"],
+  input[type="submit"] {
+    @apply min-h-11 min-w-11 cursor-pointer touch-manipulation;
+  }
+  
+  /* High contrast focus states */
+  :focus-visible {
+    @apply outline-2 outline-offset-2 outline-primary;
+  }
+  
+  /* Improved form control base styles */
+  input, select, textarea {
+    @apply min-h-11;
+  }
+  
+  /* Consistent header hierarchy */
+  h1 {
+    @apply text-3xl md:text-4xl font-bold tracking-tight;
+  }
+  
+  h2 {
+    @apply text-2xl md:text-3xl font-semibold tracking-tight;
+  }
+  
+  h3 {
+    @apply text-xl md:text-2xl font-semibold tracking-tight;
+  }
+  
+  h4 {
+    @apply text-lg md:text-xl font-semibold;
+  }
+  
+  /* Enhanced container sizing */
+  .container {
+    @apply px-4 mx-auto sm:px-6 lg:px-8;
+  }
+  
+  /* Base transitions */
+  .transition-base {
+    @apply transition-all duration-300 ease-in-out;
+  }
 }
 
 @layer utilities {
+  /* Basic panel styles */
   .glass-panel {
     @apply bg-white/15 backdrop-blur-md rounded-2xl shadow-xl border border-white/20;
   }
@@ -89,10 +142,16 @@
     @apply bg-gradient-to-r from-black/30 to-primary/30 backdrop-blur-sm border border-white/30 text-white shadow-lg hover:bg-white/30 rounded-xl;
   }
   
+  /* Typography utilities */
   .text-gradient-primary {
     @apply bg-gradient-to-tr from-blue-500 via-indigo-500 to-purple-500 bg-clip-text text-transparent;
   }
   
+  .text-balance {
+    text-wrap: balance;
+  }
+  
+  /* Animations */
   .animate-fade-in {
     animation: fadeIn 0.3s ease-in-out;
   }
@@ -106,6 +165,21 @@
       opacity: 1;
       transform: translateY(0);
     }
+  }
+  
+  /* Enhanced touch targets for buttons */
+  .touch-target {
+    @apply p-3 min-h-12 min-w-12 flex items-center justify-center;
+  }
+  
+  /* Improved readability and contrast utilities */
+  .high-contrast-text {
+    @apply text-foreground font-medium;
+    text-shadow: 0 1px 1px rgba(0,0,0,0.1);
+  }
+  
+  .subtle-text {
+    @apply text-muted-foreground/90;
   }
   
   /* Enhanced futuristic AR styles */
@@ -152,42 +226,19 @@
     }
   }
   
-  .ar-pointer {
-    position: relative;
-  }
-  
-  .ar-pointer::after {
-    content: '';
-    position: absolute;
-    width: 2px;
-    height: 30px;
-    background: linear-gradient(to bottom, rgba(59, 130, 246, 0.8), transparent);
-    animation: scanLine 1.5s infinite alternate;
-  }
-  
-  @keyframes scanLine {
-    0% {
-      height: 20px;
-      opacity: 0.5;
-    }
-    100% {
-      height: 40px;
-      opacity: 1;
-    }
-  }
-  
-  /* New AR recognition frame style */
+  /* New AR recognition frame style with improved contrast */
   .ar-recognition-frame {
     position: relative;
+    border-radius: 4px;
   }
   
   .ar-recognition-frame::before,
   .ar-recognition-frame::after {
     content: '';
     position: absolute;
-    width: 20px;
-    height: 20px;
-    border: 2px solid rgba(59, 130, 246, 0.8);
+    width: 24px;
+    height: 24px;
+    border: 2px solid rgba(59, 130, 246, 0.9);
     animation: framePulse 2s infinite alternate;
   }
   
@@ -207,137 +258,56 @@
   
   @keyframes framePulse {
     0% {
-      opacity: 0.6;
-      box-shadow: 0 0 5px rgba(59, 130, 246, 0.3);
+      opacity: 0.7;
+      box-shadow: 0 0 5px rgba(59, 130, 246, 0.4);
     }
     100% {
       opacity: 1;
-      box-shadow: 0 0 10px rgba(59, 130, 246, 0.7);
+      box-shadow: 0 0 10px rgba(59, 130, 246, 0.8);
     }
   }
   
-  /* Data processing animation */
-  .ar-data-processing {
-    position: relative;
-    overflow: hidden;
+  /* Gesture-friendly interactive elements */
+  .gesture-card {
+    @apply transition-all duration-300 active:scale-98 cursor-pointer;
+    touch-action: manipulation;
   }
   
-  .ar-data-processing::after {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: -100%;
-    width: 50%;
-    height: 100%;
-    background: linear-gradient(to right, transparent, rgba(59, 130, 246, 0.2), transparent);
-    animation: dataScan 2s infinite;
-    transform: skewX(-20deg);
+  /* Card with hover effect for desktop */
+  .hover-card {
+    @apply transition-all duration-300;
   }
   
-  @keyframes dataScan {
-    0% {
-      left: -50%;
-    }
-    100% {
-      left: 150%;
+  @media (hover: hover) {
+    .hover-card:hover {
+      @apply transform -translate-y-1 shadow-lg;
     }
   }
   
-  /* New futuristic hover effects */
-  .hover-glow {
-    transition: all 0.3s ease;
+  /* Improved visual hierarchy with consistent spacing */
+  .content-section {
+    @apply space-y-6 my-6;
   }
   
-  .hover-glow:hover {
-    box-shadow: 0 0 20px rgba(59, 130, 246, 0.7);
-    transform: translateY(-2px);
+  .section-title {
+    @apply text-xl font-semibold mb-4 pb-2 border-b border-border/50;
   }
   
-  /* Hologram effect */
-  .hologram {
-    position: relative;
-    overflow: hidden;
-  }
-  
-  .hologram::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: repeating-linear-gradient(
-      0deg,
-      rgba(59, 130, 246, 0.1),
-      rgba(59, 130, 246, 0.1) 1px,
-      transparent 1px,
-      transparent 2px
-    );
-    pointer-events: none;
-    opacity: 0.5;
-    animation: hologramLines 10s linear infinite;
-  }
-  
-  @keyframes hologramLines {
-    0% {
-      background-position: 0 0;
-    }
-    100% {
-      background-position: 0 100px;
-    }
-  }
-  
-  /* Digital noise effect */
-  .digital-noise {
-    position: relative;
-  }
-  
-  .digital-noise::after {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
-    opacity: 0.05;
-    pointer-events: none;
-  }
-  
-  /* New button styles */
+  /* Button styles with enhanced touch area */
   .neo-button {
-    @apply bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-xl;
-    position: relative;
-    overflow: hidden;
+    @apply rounded-xl py-3 px-5 min-h-11 min-w-11 flex items-center justify-center gap-2 transition-colors duration-300;
+    @apply bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-medium shadow-md;
+    @apply hover:from-blue-700 hover:to-indigo-700 active:shadow-inner;
+    touch-action: manipulation;
   }
   
-  .neo-button::after {
-    content: '';
-    position: absolute;
-    top: -50%;
-    left: -50%;
-    width: 200%;
-    height: 200%;
-    background: linear-gradient(
-      to bottom right,
-      rgba(255, 255, 255, 0) 0%,
-      rgba(255, 255, 255, 0.1) 50%,
-      rgba(255, 255, 255, 0) 100%
-    );
-    transform: rotate(30deg);
-    animation: buttonGlare 3s infinite linear;
+  /* Pills & Badges with consistent sizing */
+  .pill {
+    @apply inline-flex items-center px-3 py-1 rounded-full text-sm font-medium;
+    @apply bg-primary/10 text-primary;
   }
   
-  @keyframes buttonGlare {
-    0% {
-      transform: translate(-100%, -100%) rotate(30deg);
-    }
-    100% {
-      transform: translate(50%, 50%) rotate(30deg);
-    }
-  }
-  
-  /* Live detection frame */
+  /* Live detection frame with improved contrast */
   .live-detection-frame {
     @apply rounded-xl overflow-hidden relative;
     position: relative;
@@ -362,5 +332,45 @@
     to {
       background-position: 200% center;
     }
+  }
+  
+  /* Screen reader utilities */
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border-width: 0;
+  }
+  
+  /* Improved form element styling for touch */
+  .form-input {
+    @apply rounded-lg border-input bg-white/10 backdrop-blur-sm px-4 py-3 min-h-11 w-full;
+    @apply hover:border-primary/50 focus:border-primary focus:ring-1 focus:ring-primary;
+    @apply placeholder:text-muted-foreground/70;
+  }
+  
+  /* Toast notifications with improved visibility */
+  .toast-notification {
+    @apply bg-white/90 dark:bg-gray-800/90 backdrop-blur-md text-foreground rounded-lg shadow-lg border border-white/20;
+    @apply py-3 px-4 max-w-md;
+  }
+  
+  /* Visual hierarchy for lists */
+  .styled-list {
+    @apply space-y-3;
+  }
+  
+  .styled-list li {
+    @apply flex items-start gap-2;
+  }
+  
+  .styled-list li::before {
+    content: '';
+    @apply block w-1.5 h-1.5 rounded-full bg-primary mt-1.5 flex-shrink-0;
   }
 }

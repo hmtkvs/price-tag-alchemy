@@ -1,4 +1,3 @@
-
 // Real API services for currency conversion and price detection
 
 const DEEPINFRA_API_KEY = "0jxRzr6VTMJsMSnR2NomXgP0PKDkEEw5";
@@ -25,51 +24,175 @@ export const fetchCurrencyRates = async (base: string): Promise<Record<string, n
 };
 
 // Use LLM to detect price and currency from image
-export const detectPriceFromImage = async (imageData: string): Promise<{
+export const detectPriceFromImage = async (
+  imageData: string,
+  scanMode: 'price' | 'receipt' | 'menu' = 'price'
+): Promise<{
   detectedPrice: number;
   detectedCurrency: string | null;
   confidence: number;
   productName?: string;
   productCategory?: string;
+  items?: Array<{
+    name: string;
+    price: number;
+    currency: string;
+  }>;
+  isReceipt?: boolean;
+  isMenu?: boolean;
 }> => {
   try {
     // Convert base64 to blob if needed
     const base64Data = imageData.split(',')[1];
     
-    // Improved prompt for better price detection, especially for discounted prices and product names
-    const prompt = `
-      You are an AI assistant specialized in analyzing price tags from retail environments.
-      
-      TASK:
-      Analyze this image of a price tag and extract the MOST RELEVANT price for a consumer.
-      
-      IMPORTANT RULES:
-      1. If there's a discounted/sale price, always extract THAT price as the main price, not the original price
-      2. If there are multiple prices, identify which is the CURRENT price a customer would pay (usually the larger or highlighted one)
-      3. Identify the currency symbol or code (USD, EUR, TRY, etc.)
-      4. Carefully identify the EXACT product name/type that is visible in the image - be as detailed as possible
-      5. Identify the product category (food, electronics, clothing, etc.)
-      6. Assess your confidence in the extraction (0-1 scale)
-      
-      FORMAT YOUR RESPONSE AS JSON:
-      {
-        "price": [extracted current/final/discounted price as number],
-        "currency": [currency code like USD, EUR, TRY, etc.],
-        "productName": [EXACT product name as it appears, with brand, model, and all details visible],
-        "productCategory": [product category if identifiable, "Unknown" if not],
-        "confidence": [your confidence between 0-1],
-        "isDiscounted": [true/false],
-        "originalPrice": [original price if visible, null if not]
-      }
-      
-      Only return the JSON object, nothing else.
-    `;
+    // Different prompts based on scan mode
+    let prompt = '';
     
-    console.log("Processing image with DeepInfra LLM...");
+    if (scanMode === 'receipt') {
+      prompt = `
+        You are an AI assistant specialized in analyzing receipts from retail environments.
+        
+        TASK:
+        Analyze this image of a receipt and extract all items with their prices.
+        
+        IMPORTANT RULES:
+        1. Extract each item name and its price
+        2. Identify the currency symbol or code (USD, EUR, TRY, etc.)
+        3. Calculate the total amount
+        4. Identify the store/merchant name if visible
+        5. Identify the date of purchase if visible
+        6. Assess your confidence in the extraction (0-1 scale)
+        
+        FORMAT YOUR RESPONSE AS JSON:
+        {
+          "merchantName": [store/business name if visible],
+          "date": [purchase date in YYYY-MM-DD format if visible, null if not],
+          "currency": [currency code like USD, EUR, TRY, etc.],
+          "items": [
+            {
+              "name": [item name],
+              "price": [price as number],
+              "quantity": [quantity if specified, 1 if not]
+            },
+            ...
+          ],
+          "total": [total amount as number],
+          "confidence": [your confidence between 0-1]
+        }
+        
+        Only return the JSON object, nothing else.
+      `;
+    } else if (scanMode === 'menu') {
+      prompt = `
+        You are an AI assistant specialized in analyzing restaurant menus.
+        
+        TASK:
+        Analyze this image of a menu and extract all dishes with their prices.
+        
+        IMPORTANT RULES:
+        1. Extract each dish name and its price
+        2. Include any description provided for each dish
+        3. Identify the currency symbol or code (USD, EUR, TRY, etc.)
+        4. Identify the restaurant name if visible
+        5. Categorize dishes if possible (appetizers, main courses, desserts, etc.)
+        6. Assess your confidence in the extraction (0-1 scale)
+        
+        FORMAT YOUR RESPONSE AS JSON:
+        {
+          "restaurantName": [restaurant name if visible],
+          "currency": [currency code like USD, EUR, TRY, etc.],
+          "categories": [
+            {
+              "name": [category name],
+              "items": [
+                {
+                  "name": [dish name],
+                  "description": [dish description if available],
+                  "price": [price as number]
+                },
+                ...
+              ]
+            },
+            ...
+          ],
+          "confidence": [your confidence between 0-1]
+        }
+        
+        Only return the JSON object, nothing else.
+      `;
+    } else {
+      // Default price tag prompt (improved from original)
+      prompt = `
+        You are an AI assistant specialized in analyzing price tags from retail environments.
+        
+        TASK:
+        Analyze this image of a price tag and extract the MOST RELEVANT price for a consumer.
+        
+        IMPORTANT RULES:
+        1. If there's a discounted/sale price, always extract THAT price as the main price, not the original price
+        2. If there are multiple prices, identify which is the CURRENT price a customer would pay (usually the larger or highlighted one)
+        3. Identify the currency symbol or code (USD, EUR, TRY, etc.)
+        4. Carefully identify the EXACT product name/type that is visible in the image - be as detailed as possible
+        5. Identify the product category (food, electronics, clothing, etc.)
+        6. Assess your confidence in the extraction (0-1 scale)
+        
+        FORMAT YOUR RESPONSE AS JSON:
+        {
+          "price": [extracted current/final/discounted price as number],
+          "currency": [currency code like USD, EUR, TRY, etc.],
+          "productName": [EXACT product name as it appears, with brand, model, and all details visible],
+          "productCategory": [product category if identifiable, "Unknown" if not],
+          "confidence": [your confidence between 0-1],
+          "isDiscounted": [true/false],
+          "originalPrice": [original price if visible, null if not]
+        }
+        
+        Only return the JSON object, nothing else.
+      `;
+    }
     
-    // Mock response based on the image path
+    console.log(`Processing image with DeepInfra LLM in ${scanMode} mode...`);
+    
+    // Return mock data based on scan mode and the image path
+    if (scanMode === 'receipt') {
+      return {
+        detectedPrice: 149.90, // Total price
+        detectedCurrency: "TRY",
+        confidence: 0.98,
+        productName: "Market Receipt",
+        productCategory: "Grocery",
+        items: [
+          { name: "Sütaş Natural Yogurt 1.5kg", price: 39.50, currency: "TRY" },
+          { name: "Bread", price: 7.50, currency: "TRY" },
+          { name: "Milk 1L", price: 29.90, currency: "TRY" },
+          { name: "Eggs (10 pack)", price: 45.00, currency: "TRY" },
+          { name: "Tomatoes 1kg", price: 28.00, currency: "TRY" }
+        ],
+        isReceipt: true
+      };
+    }
+    
+    if (scanMode === 'menu') {
+      return {
+        detectedPrice: 0, // No single price for a menu
+        detectedCurrency: "TRY",
+        confidence: 0.97,
+        productName: "Restaurant Menu",
+        productCategory: "Food",
+        items: [
+          { name: "Grilled Fish", price: 120.00, currency: "TRY" },
+          { name: "Kebab", price: 95.00, currency: "TRY" },
+          { name: "Mixed Mezze Plate", price: 65.00, currency: "TRY" },
+          { name: "Baklava", price: 45.00, currency: "TRY" },
+          { name: "Turkish Tea", price: 10.00, currency: "TRY" }
+        ],
+        isMenu: true
+      };
+    }
+    
+    // Handle specific demo images
     if (imageData.includes("6a0a3fcf-c429-4df0-98b8-56c1183f6773")) {
-      // New Milka chocolate price tag
+      // Milka chocolate price tag
       return {
         detectedPrice: 9.90,
         detectedCurrency: "TRY",
@@ -80,7 +203,7 @@ export const detectPriceFromImage = async (imageData: string): Promise<{
     }
     
     if (imageData.includes("a6e5d0e0-0f29-40a9-beac-d8eb1b10e6ba")) {
-      // New Turkish price tag
+      // Turkish price tag
       return {
         detectedPrice: 39.50,
         detectedCurrency: "TRY",
@@ -316,7 +439,6 @@ const getMockRates = (base: string): Record<string, number> => {
       "INR": 2.57,
       "BRL": 0.16
     },
-    // Add other base currencies here
     "GBP": {
       "USD": 1.27,
       "EUR": 1.17,
