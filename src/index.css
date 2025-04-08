@@ -84,41 +84,58 @@
     background-attachment: fixed;
   }
   
-  /* Improved button base styles for touch targets */
+  /* Enhanced button base styles for touch targets - Improved gesture-friendly design */
   button, 
   .button,
   [role="button"],
   a.button,
   input[type="button"],
   input[type="submit"] {
-    @apply min-h-11 min-w-11 cursor-pointer touch-manipulation;
+    @apply min-h-12 min-w-12 cursor-pointer touch-manipulation;
   }
   
-  /* High contrast focus states */
+  /* High contrast focus states - Enhanced color contrast */
   :focus-visible {
     @apply outline-2 outline-offset-2 outline-primary;
+    outline-color: rgba(59, 130, 246, 1); /* Ensure high contrast */
   }
   
-  /* Improved form control base styles */
+  /* Improved form control base styles - Gesture-friendly */
   input, select, textarea {
-    @apply min-h-11;
+    @apply min-h-12;
   }
   
-  /* Consistent header hierarchy */
+  /* Consistent header hierarchy - Visual hierarchy improvement */
   h1 {
-    @apply text-3xl md:text-4xl font-bold tracking-tight;
+    @apply text-3xl md:text-4xl font-bold tracking-tight leading-tight;
+    margin-bottom: 0.5em;
   }
   
   h2 {
-    @apply text-2xl md:text-3xl font-semibold tracking-tight;
+    @apply text-2xl md:text-3xl font-semibold tracking-tight leading-tight;
+    margin-bottom: 0.5em;
   }
   
   h3 {
-    @apply text-xl md:text-2xl font-semibold tracking-tight;
+    @apply text-xl md:text-2xl font-semibold tracking-tight leading-tight;
+    margin-bottom: 0.5em;
   }
   
   h4 {
-    @apply text-lg md:text-xl font-semibold;
+    @apply text-lg md:text-xl font-semibold leading-tight;
+    margin-bottom: 0.5em;
+  }
+  
+  /* Improved paragraph readability - Enhanced color contrast */
+  p {
+    @apply text-base leading-relaxed;
+    max-width: 65ch; /* Limit line length for better readability */
+  }
+  
+  /* Better link contrast */
+  a {
+    @apply text-primary hover:text-primary/80 underline-offset-2;
+    text-underline-offset: 0.2em;
   }
   
   /* Enhanced container sizing */
@@ -130,21 +147,47 @@
   .transition-base {
     @apply transition-all duration-300 ease-in-out;
   }
+  
+  /* Improved scrollbar for better contrast */
+  .scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(59, 130, 246, 0.3) rgba(0, 0, 0, 0.1);
+  }
+  
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 6px;
+  }
+  
+  .scrollbar-thin::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.1);
+    border-radius: 3px;
+  }
+  
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background-color: rgba(59, 130, 246, 0.3);
+    border-radius: 3px;
+  }
 }
 
 @layer utilities {
-  /* Basic panel styles */
+  /* Improved glass panel with better contrast */
   .glass-panel {
-    @apply bg-white/15 backdrop-blur-md rounded-2xl shadow-xl border border-white/20;
+    @apply bg-white/20 backdrop-blur-md rounded-2xl shadow-xl border border-white/30;
+    /* Enhanced contrast border */
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1), 0 1px 3px rgba(0, 0, 0, 0.05), 0 0 0 1px rgba(255, 255, 255, 0.3);
   }
   
   .glass-button {
-    @apply bg-gradient-to-r from-black/30 to-primary/30 backdrop-blur-sm border border-white/30 text-white shadow-lg hover:bg-white/30 rounded-xl;
+    @apply bg-gradient-to-r from-black/40 to-primary/40 backdrop-blur-sm border border-white/40 text-white shadow-lg hover:bg-white/40 rounded-xl;
+    /* Enhanced contrast for better visibility */
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
   }
   
-  /* Typography utilities */
+  /* Typography utilities with improved contrast */
   .text-gradient-primary {
-    @apply bg-gradient-to-tr from-blue-500 via-indigo-500 to-purple-500 bg-clip-text text-transparent;
+    @apply bg-gradient-to-tr from-blue-600 via-indigo-500 to-purple-600 bg-clip-text text-transparent;
+    /* Enhanced with subtle text shadow for better contrast on light backgrounds */
+    text-shadow: 0 1px 1px rgba(0, 0, 0, 0.05);
   }
   
   .text-balance {
@@ -167,24 +210,45 @@
     }
   }
   
-  /* Enhanced touch targets for buttons */
+  /* Enhanced touch targets for buttons - Gesture-friendly design */
   .touch-target {
     @apply p-3 min-h-12 min-w-12 flex items-center justify-center;
+    /* Extended hit area outside visible button */
+    position: relative;
+  }
+  
+  .touch-target::after {
+    content: '';
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    bottom: -8px;
+    left: -8px;
+    pointer-events: auto;
+    z-index: -1;
   }
   
   /* Improved readability and contrast utilities */
   .high-contrast-text {
     @apply text-foreground font-medium;
-    text-shadow: 0 1px 1px rgba(0,0,0,0.1);
+    /* Enhanced contrast with shadow */
+    text-shadow: 0 1px 1px rgba(0,0,0,0.15);
+    /* Ensure minimum contrast ratio */
+    color: rgba(0, 0, 0, 0.85);
+    letter-spacing: 0.01em;
   }
   
   .subtle-text {
-    @apply text-muted-foreground/90;
+    @apply text-muted-foreground;
+    /* Improved contrast over default */
+    color: rgba(0, 0, 0, 0.65);
   }
   
-  /* Enhanced futuristic AR styles */
+  /* Enhanced futuristic AR styles with better contrast */
   .ar-overlay {
-    box-shadow: 0 0 15px rgba(59, 130, 246, 0.5);
+    box-shadow: 0 0 15px rgba(59, 130, 246, 0.5),
+                0 4px 6px rgba(0, 0, 0, 0.1),
+                0 1px 3px rgba(0, 0, 0, 0.08);
     animation: pulseBorder 3s infinite alternate;
     position: relative;
     overflow: hidden;
@@ -199,7 +263,7 @@
     height: 200%;
     background: linear-gradient(to bottom right, 
                                rgba(59, 130, 246, 0) 0%, 
-                               rgba(59, 130, 246, 0.1) 50%, 
+                               rgba(59, 130, 246, 0.2) 50%, 
                                rgba(59, 130, 246, 0) 100%);
     transform: rotate(30deg);
     animation: scanGlare 3s infinite linear;
@@ -217,12 +281,14 @@
   
   @keyframes pulseBorder {
     0% {
-      box-shadow: 0 0 15px rgba(59, 130, 246, 0.5);
-      border-color: rgba(255, 255, 255, 0.2);
+      box-shadow: 0 0 15px rgba(59, 130, 246, 0.5),
+                 0 4px 6px rgba(0, 0, 0, 0.1);
+      border-color: rgba(255, 255, 255, 0.3);
     }
     100% {
-      box-shadow: 0 0 25px rgba(59, 130, 246, 0.8);
-      border-color: rgba(255, 255, 255, 0.4);
+      box-shadow: 0 0 25px rgba(59, 130, 246, 0.8),
+                 0 4px 6px rgba(0, 0, 0, 0.1);
+      border-color: rgba(255, 255, 255, 0.5);
     }
   }
   
@@ -236,9 +302,9 @@
   .ar-recognition-frame::after {
     content: '';
     position: absolute;
-    width: 24px;
-    height: 24px;
-    border: 2px solid rgba(59, 130, 246, 0.9);
+    width: 36px;
+    height: 36px;
+    border: 3px solid rgba(59, 130, 246, 0.9);
     animation: framePulse 2s infinite alternate;
   }
   
@@ -258,12 +324,12 @@
   
   @keyframes framePulse {
     0% {
-      opacity: 0.7;
-      box-shadow: 0 0 5px rgba(59, 130, 246, 0.4);
+      opacity: 0.8;
+      box-shadow: 0 0 5px rgba(59, 130, 246, 0.6);
     }
     100% {
       opacity: 1;
-      box-shadow: 0 0 10px rgba(59, 130, 246, 0.8);
+      box-shadow: 0 0 10px rgba(59, 130, 246, 0.9);
     }
   }
   
@@ -271,16 +337,29 @@
   .gesture-card {
     @apply transition-all duration-300 active:scale-98 cursor-pointer;
     touch-action: manipulation;
+    /* Add contrast on active state */
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
   }
   
-  /* Card with hover effect for desktop */
+  .gesture-card:active {
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+    transform: scale(0.98) translateY(1px);
+  }
+  
+  /* Card with hover effect for desktop - Enhanced contrast */
   .hover-card {
     @apply transition-all duration-300;
+    /* Better base shadow for contrast */
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08),
+                0 1px 2px rgba(0, 0, 0, 0.04);
   }
   
   @media (hover: hover) {
     .hover-card:hover {
-      @apply transform -translate-y-1 shadow-lg;
+      @apply transform -translate-y-1;
+      /* Enhanced shadow for hover state */
+      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1),
+                  0 2px 4px rgba(0, 0, 0, 0.08);
     }
   }
   
@@ -290,34 +369,45 @@
   }
   
   .section-title {
-    @apply text-xl font-semibold mb-4 pb-2 border-b border-border/50;
+    @apply text-xl font-semibold mb-4 pb-2 border-b border-border/70;
+    /* Enhanced contrast for better hierarchy */
+    border-bottom-width: 2px;
   }
   
-  /* Button styles with enhanced touch area */
+  /* Button styles with enhanced touch area and contrast */
   .neo-button {
-    @apply rounded-xl py-3 px-5 min-h-11 min-w-11 flex items-center justify-center gap-2 transition-colors duration-300;
+    @apply rounded-xl py-3 px-5 min-h-12 min-w-12 flex items-center justify-center gap-2 transition-colors duration-300;
     @apply bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-medium shadow-md;
     @apply hover:from-blue-700 hover:to-indigo-700 active:shadow-inner;
     touch-action: manipulation;
+    /* Enhanced shadow for better contrast */
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.15),
+                0 1px 3px rgba(0, 0, 0, 0.1);
+    /* Enhanced contrast text */
+    text-shadow: 0 1px 1px rgba(0, 0, 0, 0.2);
   }
   
-  /* Pills & Badges with consistent sizing */
+  /* Pills & Badges with consistent sizing and enhanced contrast */
   .pill {
     @apply inline-flex items-center px-3 py-1 rounded-full text-sm font-medium;
-    @apply bg-primary/10 text-primary;
+    @apply bg-primary/15 text-primary;
+    /* Enhanced contrast */
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+    border: 1px solid rgba(59, 130, 246, 0.2);
   }
   
   /* Live detection frame with improved contrast */
   .live-detection-frame {
     @apply rounded-xl overflow-hidden relative;
     position: relative;
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.5);
   }
   
   .live-detection-frame::before {
     content: '';
     position: absolute;
     inset: 0;
-    border: 2px solid transparent;
+    border: 3px solid transparent;
     background: linear-gradient(90deg, #3b82f6, #8b5cf6, #3b82f6) border-box;
     mask: linear-gradient(#fff 0 0) padding-box, linear-gradient(#fff 0 0);
     -webkit-mask-composite: xor;
@@ -347,30 +437,38 @@
     border-width: 0;
   }
   
-  /* Improved form element styling for touch */
+  /* Improved form element styling for touch with better contrast */
   .form-input {
-    @apply rounded-lg border-input bg-white/10 backdrop-blur-sm px-4 py-3 min-h-11 w-full;
-    @apply hover:border-primary/50 focus:border-primary focus:ring-1 focus:ring-primary;
-    @apply placeholder:text-muted-foreground/70;
+    @apply rounded-lg border-input bg-white/15 backdrop-blur-sm px-4 py-3 min-h-12 w-full;
+    @apply hover:border-primary/60 focus:border-primary focus:ring-2 focus:ring-primary/50;
+    @apply placeholder:text-muted-foreground/80;
+    /* Enhanced contrast */
+    border: 2px solid rgba(0, 0, 0, 0.1);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
   }
   
-  /* Toast notifications with improved visibility */
+  /* Toast notifications with improved visibility and contrast */
   .toast-notification {
-    @apply bg-white/90 dark:bg-gray-800/90 backdrop-blur-md text-foreground rounded-lg shadow-lg border border-white/20;
+    @apply bg-white/95 dark:bg-gray-800/95 backdrop-blur-md text-foreground rounded-lg shadow-lg border border-white/30;
     @apply py-3 px-4 max-w-md;
+    /* Enhanced contrast and readability */
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15),
+                0 2px 4px rgba(0, 0, 0, 0.1);
   }
   
-  /* Visual hierarchy for lists */
+  /* Visual hierarchy for lists with enhanced contrast */
   .styled-list {
     @apply space-y-3;
   }
   
   .styled-list li {
-    @apply flex items-start gap-2;
+    @apply flex items-start gap-3;
   }
   
   .styled-list li::before {
     content: '';
-    @apply block w-1.5 h-1.5 rounded-full bg-primary mt-1.5 flex-shrink-0;
+    @apply block w-2 h-2 rounded-full bg-primary mt-1.5 flex-shrink-0;
+    /* Enhanced visible contrast */
+    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.5);
   }
 }

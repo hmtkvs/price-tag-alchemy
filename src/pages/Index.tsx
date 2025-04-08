@@ -3,7 +3,7 @@ import React, { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { toast } from 'sonner';
-import { Camera, RefreshCw, ArrowLeft, User, CircleDollarSign } from "lucide-react";
+import { Camera, RefreshCw, ArrowLeft, User, CircleDollarSign, Receipt, FileText } from "lucide-react";
 import CameraCapture from '@/components/Camera';
 import CurrencySelector from '@/components/CurrencySelector';
 import AROverlay from '@/components/AROverlay';
@@ -41,11 +41,23 @@ const Index = () => {
   const [productCategory, setProductCategory] = useState<string>("Unknown");
   const [isComparisonOpen, setIsComparisonOpen] = useState<boolean>(false);
   const [comparisons, setComparisons] = useState<any[]>([]);
+  const [scanMode, setScanMode] = useState<'price' | 'receipt' | 'menu'>('price');
+  const [isReceipt, setIsReceipt] = useState<boolean>(false);
+  const [isMenu, setIsMenu] = useState<boolean>(false);
+  const [restaurantName, setRestaurantName] = useState<string>("");
+  const [storeName, setStoreName] = useState<string>("");
+  const [items, setItems] = useState<any[]>([]);
+  const [tax, setTax] = useState<number | null>(null);
+  const [total, setTotal] = useState<number | null>(null);
+  const [paymentMethod, setPaymentMethod] = useState<string>("");
+  const [transactionId, setTransactionId] = useState<string>("");
   const [liveDetectionData, setLiveDetectionData] = useState<{
     image: string;
     price: number;
     currency: string;
     productName?: string;
+    isReceipt?: boolean;
+    isMenu?: boolean;
   } | null>(null);
   
   const navigate = useNavigate();
@@ -57,7 +69,7 @@ const Index = () => {
     
     try {
       // Call LLM API to detect price and currency
-      const result = await detectPriceFromImage(imageData);
+      const result = await detectPriceFromImage(imageData, scanMode);
       setDetectedPrice(result.detectedPrice);
       
       // Set product details if available
@@ -69,6 +81,35 @@ const Index = () => {
         setProductCategory(result.productCategory);
       }
       
+      // Handle receipt-specific data
+      setIsReceipt(!!result.isReceipt);
+      setIsMenu(!!result.isMenu);
+      setItems(result.items || []);
+      
+      if (result.restaurantName) {
+        setRestaurantName(result.restaurantName);
+      }
+      
+      if (result.storeName) {
+        setStoreName(result.storeName);
+      }
+      
+      if (result.tax !== undefined) {
+        setTax(result.tax);
+      }
+      
+      if (result.total !== undefined) {
+        setTotal(result.total);
+      }
+      
+      if (result.paymentMethod) {
+        setPaymentMethod(result.paymentMethod);
+      }
+      
+      if (result.transactionId) {
+        setTransactionId(result.transactionId);
+      }
+      
       if (result.detectedCurrency) {
         setSourceCurrency(result.detectedCurrency);
         // If currency detected, go to conversion directly
@@ -76,7 +117,7 @@ const Index = () => {
       } else {
         // Ask user to select currency
         setCurrentStep(AppStep.CURRENCY_SELECT);
-        toast("Please select the currency shown on the price tag");
+        toast("Please select the currency shown on the image");
       }
     } catch (error) {
       console.error("Error processing image:", error);
@@ -92,7 +133,7 @@ const Index = () => {
     
     try {
       // Quick check for price detection
-      const result = await detectPriceFromImage(imageData);
+      const result = await detectPriceFromImage(imageData, scanMode);
       
       if (result.detectedPrice && result.detectedCurrency && result.confidence > 0.7) {
         // Show live AR overlay
@@ -100,7 +141,9 @@ const Index = () => {
           image: imageData,
           price: result.detectedPrice,
           currency: result.detectedCurrency,
-          productName: result.productName
+          productName: result.productName,
+          isReceipt: result.isReceipt,
+          isMenu: result.isMenu
         });
         
         // Get conversion rate in background
@@ -124,7 +167,7 @@ const Index = () => {
       console.error("Error in live detection:", error);
       // Don't show error to user for live detection
     }
-  }, [isProcessing, targetCurrency]);
+  }, [isProcessing, targetCurrency, scanMode]);
 
   const proceedToConversion = async (source: string, target: string, price: number) => {
     if (!source || !target || price === null) {
@@ -170,14 +213,25 @@ const Index = () => {
     }
     
     try {
-      const purchaseId = savePurchase({
+      const purchaseData = {
         productName,
         originalPrice: detectedPrice,
         originalCurrency: sourceCurrency,
         convertedPrice,
         targetCurrency,
-        imageUrl: capturedImage
-      });
+        imageUrl: capturedImage,
+        isReceipt,
+        isMenu,
+        restaurantName,
+        storeName,
+        transactionId,
+        items,
+        tax,
+        total,
+        paymentMethod
+      };
+      
+      const purchaseId = savePurchase(purchaseData);
       
       toast.success("Purchase saved to your history");
     } catch (error) {
@@ -211,6 +265,21 @@ const Index = () => {
     }
   };
 
+  const handleScanModeChange = (mode: 'price' | 'receipt' | 'menu') => {
+    setScanMode(mode);
+    
+    // Reset relevant state when changing modes
+    setIsReceipt(mode === 'receipt');
+    setIsMenu(mode === 'menu');
+    setItems([]);
+    setRestaurantName("");
+    setStoreName("");
+    setTax(null);
+    setTotal(null);
+    setPaymentMethod("");
+    setTransactionId("");
+  };
+
   const resetToCamera = () => {
     setCapturedImage(null);
     setDetectedPrice(null);
@@ -218,6 +287,13 @@ const Index = () => {
     setLiveDetectionData(null);
     setProductName("Unknown Product");
     setProductCategory("Unknown");
+    setItems([]);
+    setRestaurantName("");
+    setStoreName("");
+    setTax(null);
+    setTotal(null);
+    setPaymentMethod("");
+    setTransactionId("");
     setCurrentStep(AppStep.CAMERA);
   };
 
@@ -230,6 +306,13 @@ const Index = () => {
     setLiveDetectionData(null);
     setProductName("Unknown Product");
     setProductCategory("Unknown");
+    setItems([]);
+    setRestaurantName("");
+    setStoreName("");
+    setTax(null);
+    setTotal(null);
+    setPaymentMethod("");
+    setTransactionId("");
     setCurrentStep(AppStep.LANDING);
   };
 
@@ -244,7 +327,7 @@ const Index = () => {
               variant="outline" 
               size="icon"
               onClick={() => navigate('/profile')}
-              className="rounded-full bg-white/10 border-white/20 hover:bg-white/20"
+              className="rounded-full bg-white/10 border-white/20 hover:bg-white/20 touch-target"
             >
               <User className="h-5 w-5" />
             </Button>
@@ -253,7 +336,7 @@ const Index = () => {
                 variant="outline" 
                 size="icon"
                 onClick={resetToWelcome}
-                className="rounded-full bg-white/10 border-white/20 hover:bg-white/20"
+                className="rounded-full bg-white/10 border-white/20 hover:bg-white/20 touch-target"
               >
                 <ArrowLeft className="h-5 w-5" />
               </Button>
@@ -271,13 +354,13 @@ const Index = () => {
         {currentStep === AppStep.WELCOME && (
           <div className="animate-fade-in flex flex-col items-center justify-center h-full p-4 max-w-md mx-auto w-full">
             <div className="glass-panel p-8 mb-8 text-center">
-              <h2 className="text-2xl font-bold mb-4">Welcome to Price Tag Alchemy</h2>
+              <h2 className="text-2xl font-bold mb-4 high-contrast-text">Welcome to Price Tag Alchemy</h2>
               <p className="mb-6 text-muted-foreground">
                 Transform price tags into your preferred currency with a snap of your camera.
               </p>
               <Button 
                 onClick={() => setCurrentStep(AppStep.CAMERA)} 
-                className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-xl"
+                className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-xl touch-target"
                 size="lg"
               >
                 <Camera className="mr-2 h-5 w-5" />
@@ -293,6 +376,8 @@ const Index = () => {
               onCapture={handleImageCapture} 
               onPriceDetected={handleLivePriceDetection}
               autoDetect={true}
+              scanMode={scanMode}
+              onScanModeChange={handleScanModeChange}
             />
           </div>
         )}
@@ -300,7 +385,7 @@ const Index = () => {
         {currentStep === AppStep.PROCESSING && (
           <div className="animate-fade-in flex flex-col items-center justify-center py-12 p-4 max-w-md mx-auto w-full">
             <RefreshCw className="h-12 w-12 text-primary animate-spin mb-4" />
-            <p className="text-lg">Processing your image...</p>
+            <p className="text-lg high-contrast-text">Processing your image...</p>
           </div>
         )}
         
@@ -319,8 +404,12 @@ const Index = () => {
         {currentStep === AppStep.RESULT && capturedImage && detectedPrice !== null && convertedPrice !== null && (
           <div className="animate-fade-in p-4">
             <div className="mb-4 text-center">
-              <h2 className="text-xl font-bold">{productName}</h2>
-              {productCategory !== "Unknown" && (
+              <h2 className="text-xl font-bold high-contrast-text">
+                {isReceipt ? storeName || "Receipt" : 
+                 isMenu ? restaurantName || "Menu" : 
+                 productName}
+              </h2>
+              {!isReceipt && !isMenu && productCategory !== "Unknown" && (
                 <p className="text-sm text-muted-foreground">{productCategory}</p>
               )}
             </div>
@@ -333,20 +422,25 @@ const Index = () => {
               convertedPrice={convertedPrice}
               conversionRate={conversionRate}
               productName={productName}
+              isReceipt={isReceipt}
+              isMenu={isMenu}
+              restaurantName={restaurantName}
+              storeName={storeName}
+              items={items}
               onSavePurchase={handleSavePurchase}
-              onCompareItem={handleCompareItem}
+              onCompareItem={!isReceipt && !isMenu ? handleCompareItem : undefined}
             />
             
             <div className="mt-6 flex space-x-4 max-w-md mx-auto">
               <Button 
                 variant="outline" 
-                className="flex-1 bg-white/10 backdrop-blur-md border border-white/20 text-foreground hover:bg-white/20"
+                className="flex-1 bg-white/10 backdrop-blur-md border border-white/20 text-foreground hover:bg-white/20 touch-target"
                 onClick={() => setCurrentStep(AppStep.CURRENCY_SELECT)}
               >
                 Change Currency
               </Button>
               <Button 
-                className="flex-1 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white"
+                className="flex-1 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white touch-target"
                 onClick={resetToCamera}
               >
                 New Scan
@@ -360,17 +454,27 @@ const Index = () => {
           <div className="fixed bottom-4 left-4 right-4 bg-gradient-to-r from-gray-900/80 to-black/80 backdrop-blur-md rounded-lg border border-white/20 p-3 shadow-xl z-40">
             <div className="flex items-center justify-between">
               <div className="flex items-center">
-                <CircleDollarSign className="h-5 w-5 text-primary mr-2" />
+                {liveDetectionData.isReceipt ? (
+                  <Receipt className="h-5 w-5 text-primary mr-2" />
+                ) : liveDetectionData.isMenu ? (
+                  <FileText className="h-5 w-5 text-primary mr-2" />
+                ) : (
+                  <CircleDollarSign className="h-5 w-5 text-primary mr-2" />
+                )}
                 <div>
-                  <div className="text-xs text-white/70">Detected Price:</div>
-                  <div className="font-bold">
+                  <div className="text-xs text-white/70">
+                    {liveDetectionData.isReceipt ? "Receipt Detected:" : 
+                     liveDetectionData.isMenu ? "Menu Detected:" :
+                     "Price Detected:"}
+                  </div>
+                  <div className="font-bold text-white">
                     {liveDetectionData.price} {liveDetectionData.currency}
                   </div>
                 </div>
               </div>
               <Button
                 size="sm"
-                className="bg-gradient-to-r from-emerald-600 to-teal-600 text-xs"
+                className="bg-gradient-to-r from-emerald-600 to-teal-600 text-xs touch-target"
                 onClick={() => handleImageCapture(liveDetectionData.image)}
               >
                 Capture Now

@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Camera, Aperture, Image as ImageIcon, CircleX, CircleDollarSign, Receipt, FileText } from "lucide-react";
@@ -156,10 +157,10 @@ const CameraCapture: React.FC<CameraProps> = ({
     let demoImage = "/lovable-uploads/a6e5d0e0-0f29-40a9-beac-d8eb1b10e6ba.png"; // default price tag
     
     if (currentScanMode === 'receipt') {
-      demoImage = "/lovable-uploads/a6e5d0e0-0f29-40a9-beac-d8eb1b10e6ba.png"; // Replace with receipt image when available
+      demoImage = "/lovable-uploads/ae0f253e-357e-4ae8-b3c8-3af80d61465c.png"; // Use the receipt image provided
       toast.info("Using demo receipt image");
     } else if (currentScanMode === 'menu') {
-      demoImage = "/lovable-uploads/a6e5d0e0-0f29-40a9-beac-d8eb1b10e6ba.png"; // Replace with menu image when available
+      demoImage = "/lovable-uploads/c9f9d851-d673-471e-95a5-ae6dbd46c1f6.png"; // Use the menu image provided
       toast.info("Using demo menu image");
     } else {
       toast.info("Using demo price tag image");
@@ -222,16 +223,16 @@ const CameraCapture: React.FC<CameraProps> = ({
             </div>
           )}
           
-          {/* Scan mode selector buttons */}
+          {/* Scan mode selector buttons - Enhanced for high contrast and touch */}
           <div className="absolute top-4 left-0 right-0 flex justify-center space-x-2">
             <Button 
               onClick={() => toggleScanMode('price')} 
               size="sm" 
               variant={currentScanMode === 'price' ? 'default' : 'outline'}
               className={cn(
-                "rounded-full shadow-lg border",
+                "rounded-full shadow-lg border touch-target",
                 currentScanMode === 'price' 
-                  ? "bg-primary text-primary-foreground border-primary/30" 
+                  ? "bg-gradient-to-r from-blue-600 to-indigo-600 text-white border-primary/30" 
                   : "bg-black/40 backdrop-blur-md border-white/20 text-white hover:bg-black/60"
               )}
             >
@@ -243,9 +244,9 @@ const CameraCapture: React.FC<CameraProps> = ({
               size="sm" 
               variant={currentScanMode === 'receipt' ? 'default' : 'outline'}
               className={cn(
-                "rounded-full shadow-lg border",
+                "rounded-full shadow-lg border touch-target",
                 currentScanMode === 'receipt' 
-                  ? "bg-primary text-primary-foreground border-primary/30" 
+                  ? "bg-gradient-to-r from-blue-600 to-indigo-600 text-white border-primary/30" 
                   : "bg-black/40 backdrop-blur-md border-white/20 text-white hover:bg-black/60"
               )}
             >
@@ -257,9 +258,9 @@ const CameraCapture: React.FC<CameraProps> = ({
               size="sm" 
               variant={currentScanMode === 'menu' ? 'default' : 'outline'}
               className={cn(
-                "rounded-full shadow-lg border",
+                "rounded-full shadow-lg border touch-target",
                 currentScanMode === 'menu' 
-                  ? "bg-primary text-primary-foreground border-primary/30" 
+                  ? "bg-gradient-to-r from-blue-600 to-indigo-600 text-white border-primary/30" 
                   : "bg-black/40 backdrop-blur-md border-white/20 text-white hover:bg-black/60"
               )}
             >
@@ -272,7 +273,7 @@ const CameraCapture: React.FC<CameraProps> = ({
             <Button 
               onClick={captureImage} 
               size="lg" 
-              className="bg-black/60 hover:bg-black/80 backdrop-blur-md border border-white/20 text-white shadow-lg rounded-full px-6 text-base font-medium focus:ring-2 focus:ring-primary/50 focus:ring-offset-2"
+              className="bg-black/60 hover:bg-black/80 backdrop-blur-md border border-white/20 text-white shadow-lg rounded-full px-6 text-base font-medium focus:ring-2 focus:ring-primary/50 focus:ring-offset-2 touch-target"
             >
               <Aperture className="mr-2 h-5 w-5" />
               Capture
@@ -283,7 +284,7 @@ const CameraCapture: React.FC<CameraProps> = ({
                 onClick={toggleDetection} 
                 size="lg" 
                 className={cn(
-                  "backdrop-blur-md border border-white/20 text-white shadow-lg rounded-full px-6 text-base font-medium focus:ring-2 focus:ring-offset-2",
+                  "backdrop-blur-md border border-white/20 text-white shadow-lg rounded-full px-6 text-base font-medium focus:ring-2 focus:ring-offset-2 touch-target",
                   isDetecting 
                     ? "bg-primary/80 hover:bg-primary/90 focus:ring-primary/50" 
                     : "bg-black/60 hover:bg-black/80 focus:ring-white/20"
@@ -297,7 +298,7 @@ const CameraCapture: React.FC<CameraProps> = ({
             <Button 
               onClick={stopCamera} 
               size="lg" 
-              className="bg-black/60 hover:bg-black/80 backdrop-blur-md border border-white/20 text-white shadow-lg rounded-full px-6 text-base font-medium focus:ring-2 focus:ring-white/20 focus:ring-offset-2"
+              className="bg-black/60 hover:bg-black/80 backdrop-blur-md border border-white/20 text-white shadow-lg rounded-full px-6 text-base font-medium focus:ring-2 focus:ring-white/20 focus:ring-offset-2 touch-target"
             >
               <CircleX className="mr-2 h-5 w-5" />
               Close
@@ -310,14 +311,14 @@ const CameraCapture: React.FC<CameraProps> = ({
             <>
               <div className="my-4 glass-panel p-10 flex flex-col items-center">
                 <Camera className="h-24 w-24 mb-4 text-primary" />
-                <p className="text-lg text-center mb-6 font-medium">Select what you want to scan</p>
+                <p className="text-lg text-center mb-6 font-medium high-contrast-text">Select what you want to scan</p>
                 
                 <div className="flex justify-center mb-8 space-x-4">
                   <Button 
                     onClick={() => toggleScanMode('price')} 
                     variant={currentScanMode === 'price' ? 'default' : 'outline'}
                     className={cn(
-                      "rounded-full h-14 px-5",
+                      "rounded-full h-14 px-5 touch-target",
                       currentScanMode === 'price' 
                         ? "bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md" 
                         : "bg-white/10 backdrop-blur-md border border-white/20 hover:bg-white/20"
@@ -330,7 +331,7 @@ const CameraCapture: React.FC<CameraProps> = ({
                     onClick={() => toggleScanMode('receipt')} 
                     variant={currentScanMode === 'receipt' ? 'default' : 'outline'}
                     className={cn(
-                      "rounded-full h-14 px-5",
+                      "rounded-full h-14 px-5 touch-target",
                       currentScanMode === 'receipt' 
                         ? "bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md" 
                         : "bg-white/10 backdrop-blur-md border border-white/20 hover:bg-white/20"
@@ -343,7 +344,7 @@ const CameraCapture: React.FC<CameraProps> = ({
                     onClick={() => toggleScanMode('menu')} 
                     variant={currentScanMode === 'menu' ? 'default' : 'outline'}
                     className={cn(
-                      "rounded-full h-14 px-5",
+                      "rounded-full h-14 px-5 touch-target",
                       currentScanMode === 'menu' 
                         ? "bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md" 
                         : "bg-white/10 backdrop-blur-md border border-white/20 hover:bg-white/20"
@@ -359,7 +360,7 @@ const CameraCapture: React.FC<CameraProps> = ({
                     onClick={handleToggleCamera} 
                     variant="default"
                     size="lg" 
-                    className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 rounded-xl h-14 text-base font-medium shadow-lg"
+                    className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 rounded-xl h-14 text-base font-medium shadow-lg touch-target"
                   >
                     <Camera className="mr-3 h-5 w-5" />
                     Open Camera
@@ -368,7 +369,7 @@ const CameraCapture: React.FC<CameraProps> = ({
                     onClick={useDemoImage} 
                     variant="outline" 
                     size="lg"
-                    className="w-full bg-white/10 backdrop-blur-md border border-white/20 text-foreground hover:bg-white/20 h-14 text-base"
+                    className="w-full bg-white/10 backdrop-blur-md border border-white/20 text-foreground hover:bg-white/20 h-14 text-base touch-target"
                   >
                     <ImageIcon className="mr-3 h-5 w-5" />
                     Use Demo Image
@@ -378,14 +379,14 @@ const CameraCapture: React.FC<CameraProps> = ({
             </>
           ) : (
             <div className="my-4 glass-panel p-10 flex flex-col items-center">
-              <p className="text-center text-lg text-red-500 mb-4 font-medium">
+              <p className="text-center text-lg text-red-500 mb-4 font-medium high-contrast-text">
                 Camera access is required for this feature.
               </p>
               <Button 
                 onClick={useDemoImage} 
                 variant="outline" 
                 size="lg"
-                className="w-full bg-white/10 backdrop-blur-md border border-white/20 text-foreground hover:bg-white/20 h-14"
+                className="w-full bg-white/10 backdrop-blur-md border border-white/20 text-foreground hover:bg-white/20 h-14 touch-target"
               >
                 <ImageIcon className="mr-3 h-5 w-5" />
                 Use Demo Image
