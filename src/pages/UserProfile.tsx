@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { 
-  ArrowLeft, ShoppingBag, Tag, Trash2, Plus, Search, CircleX
+  ArrowLeft, ShoppingBag, Tag, Trash2, Plus, Search, CircleX, CurrencyIcon
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
@@ -18,6 +18,7 @@ const UserProfile = () => {
   const [newLabel, setNewLabel] = useState("");
   const [activeLabels, setActiveLabels] = useState<string[]>([]);
   const [expandedPurchase, setExpandedPurchase] = useState<string | null>(null);
+  const [groupByCurrency, setGroupByCurrency] = useState<boolean>(true);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -130,6 +131,35 @@ const UserProfile = () => {
       day: 'numeric'
     });
   };
+  
+  // Group purchases by currency
+  const groupPurchasesByCurrency = () => {
+    const groups: Record<string, Purchase[]> = {};
+    
+    filteredPurchases.forEach(purchase => {
+      const currency = purchase.targetCurrency;
+      if (!groups[currency]) {
+        groups[currency] = [];
+      }
+      groups[currency].push(purchase);
+    });
+    
+    return groups;
+  };
+
+  // Get currency symbol for display
+  const getCurrencySymbol = (currencyCode: string) => {
+    try {
+      // Try to get currency symbol using Intl API
+      return new Intl.NumberFormat('en', { style: 'currency', currency: currencyCode })
+        .formatToParts(1)
+        .find(part => part.type === 'currency')?.value || currencyCode;
+    } catch (e) {
+      return currencyCode;
+    }
+  };
+
+  const purchaseGroups = groupByCurrency ? groupPurchasesByCurrency() : { 'All': filteredPurchases };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background to-background/80">
@@ -154,8 +184,26 @@ const UserProfile = () => {
               <ShoppingBag className="mr-2 h-5 w-5 text-primary" />
               Purchase History
             </h2>
-            <div className="text-sm text-muted-foreground">
-              {purchases.length} {purchases.length === 1 ? 'item' : 'items'} saved
+            <div className="flex items-center space-x-2">
+              <Button
+                variant={groupByCurrency ? "default" : "outline"}
+                size="sm"
+                onClick={() => setGroupByCurrency(true)}
+                className={`text-xs ${!groupByCurrency ? "bg-white/10 border-white/20" : ""}`}
+              >
+                Group by Currency
+              </Button>
+              <Button
+                variant={!groupByCurrency ? "default" : "outline"}
+                size="sm"
+                onClick={() => setGroupByCurrency(false)}
+                className={`text-xs ${groupByCurrency ? "bg-white/10 border-white/20" : ""}`}
+              >
+                Show All
+              </Button>
+              <div className="text-sm text-muted-foreground">
+                {purchases.length} {purchases.length === 1 ? 'item' : 'items'} saved
+              </div>
             </div>
           </div>
           
@@ -214,104 +262,122 @@ const UserProfile = () => {
             </div>
           )}
           
-          {/* Purchases list */}
-          {filteredPurchases.length > 0 ? (
-            <div className="space-y-4">
-              {filteredPurchases.map((purchase) => (
-                <motion.div
-                  key={purchase.id}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.3 }}
-                  className="glass-panel border border-white/20 rounded-lg overflow-hidden"
-                >
-                  <div 
-                    className="flex items-center p-3 cursor-pointer hover:bg-white/5"
-                    onClick={() => toggleExpandPurchase(purchase.id)}
-                  >
-                    <div className="w-16 h-16 flex-shrink-0 bg-gray-200 rounded-md overflow-hidden mr-3">
-                      <img 
-                        src={purchase.imageUrl} 
-                        alt={purchase.productName || "Purchase"} 
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
-                    <div className="flex-1">
-                      <div className="font-medium">
-                        {purchase.productName || "Unknown Product"}
+          {/* Purchases list - grouped by currency */}
+          {Object.keys(purchaseGroups).length > 0 ? (
+            <div className="space-y-6">
+              {Object.entries(purchaseGroups).map(([currency, currencyPurchases]) => (
+                <div key={currency} className="mb-2">
+                  {groupByCurrency && (
+                    <div className="flex items-center mb-2 sticky top-16 z-10 backdrop-blur-sm bg-background/70 py-2">
+                      <div className="bg-primary/20 text-primary px-3 py-1 rounded-full text-sm flex items-center">
+                        {getCurrencySymbol(currency)}
+                        <span className="ml-2">{currency}</span>
                       </div>
-                      <div className="text-sm text-muted-foreground">
-                        {formatDate(purchase.date)}
-                      </div>
-                      <div className="flex items-center">
-                        <span className="text-sm line-through mr-2 opacity-70">
-                          {formatCurrency(purchase.originalPrice, purchase.originalCurrency)}
-                        </span>
-                        <span className="font-semibold text-primary">
-                          {formatCurrency(purchase.convertedPrice, purchase.targetCurrency)}
-                        </span>
-                      </div>
-                    </div>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleDeletePurchase(purchase.id);
-                      }}
-                      className="text-muted-foreground hover:text-destructive"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                  
-                  {expandedPurchase === purchase.id && (
-                    <div className="p-3 pt-0 border-t border-white/10">
-                      {/* Labels */}
-                      <div className="mb-3">
-                        <div className="text-xs text-muted-foreground mb-1">Labels:</div>
-                        <div className="flex flex-wrap gap-2">
-                          {purchase.labels.length > 0 ? (
-                            purchase.labels.map(label => (
-                              <div 
-                                key={label}
-                                className="bg-primary/20 text-primary px-2 py-1 rounded-full text-xs flex items-center"
-                              >
-                                <Tag className="mr-1 h-3 w-3" />
-                                {label}
-                              </div>
-                            ))
-                          ) : (
-                            <div className="text-xs text-muted-foreground">No labels yet</div>
-                          )}
-                        </div>
-                      </div>
-                      
-                      {/* Add new label */}
-                      <div className="flex gap-2">
-                        <Input
-                          placeholder="Add a label..."
-                          value={newLabel}
-                          onChange={(e) => setNewLabel(e.target.value)}
-                          className="text-sm h-8 bg-white/10 border-white/20"
-                          onKeyDown={(e) => {
-                            if (e.key === 'Enter') {
-                              handleAddLabel(purchase.id);
-                            }
-                          }}
-                        />
-                        <Button
-                          size="sm"
-                          className="h-8 bg-gradient-to-r from-indigo-600 to-blue-600"
-                          onClick={() => handleAddLabel(purchase.id)}
-                        >
-                          <Plus className="h-3 w-3 mr-1" />
-                          Add
-                        </Button>
+                      <div className="ml-2 text-sm text-muted-foreground">
+                        {currencyPurchases.length} {currencyPurchases.length === 1 ? 'item' : 'items'}
                       </div>
                     </div>
                   )}
-                </motion.div>
+                  
+                  <div className="space-y-4">
+                    {currencyPurchases.map((purchase) => (
+                      <motion.div
+                        key={purchase.id}
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.3 }}
+                        className="glass-panel border border-white/20 rounded-lg overflow-hidden"
+                      >
+                        <div 
+                          className="flex items-center p-3 cursor-pointer hover:bg-white/5"
+                          onClick={() => toggleExpandPurchase(purchase.id)}
+                        >
+                          <div className="w-16 h-16 flex-shrink-0 bg-gray-200 rounded-md overflow-hidden mr-3">
+                            <img 
+                              src={purchase.imageUrl} 
+                              alt={purchase.productName || "Purchase"} 
+                              className="w-full h-full object-cover"
+                            />
+                          </div>
+                          <div className="flex-1">
+                            <div className="font-medium">
+                              {purchase.productName || "Unknown Product"}
+                            </div>
+                            <div className="text-sm text-muted-foreground">
+                              {formatDate(purchase.date)}
+                            </div>
+                            <div className="flex items-center">
+                              <span className="text-sm line-through mr-2 opacity-70">
+                                {formatCurrency(purchase.originalPrice, purchase.originalCurrency)}
+                              </span>
+                              <span className="font-semibold text-primary">
+                                {formatCurrency(purchase.convertedPrice, purchase.targetCurrency)}
+                              </span>
+                            </div>
+                          </div>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDeletePurchase(purchase.id);
+                            }}
+                            className="text-muted-foreground hover:text-destructive"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                        
+                        {expandedPurchase === purchase.id && (
+                          <div className="p-3 pt-0 border-t border-white/10">
+                            {/* Labels */}
+                            <div className="mb-3">
+                              <div className="text-xs text-muted-foreground mb-1">Labels:</div>
+                              <div className="flex flex-wrap gap-2">
+                                {purchase.labels.length > 0 ? (
+                                  purchase.labels.map(label => (
+                                    <div 
+                                      key={label}
+                                      className="bg-primary/20 text-primary px-2 py-1 rounded-full text-xs flex items-center"
+                                    >
+                                      <Tag className="mr-1 h-3 w-3" />
+                                      {label}
+                                    </div>
+                                  ))
+                                ) : (
+                                  <div className="text-xs text-muted-foreground">No labels yet</div>
+                                )}
+                              </div>
+                            </div>
+                            
+                            {/* Add new label */}
+                            <div className="flex gap-2">
+                              <Input
+                                placeholder="Add a label..."
+                                value={newLabel}
+                                onChange={(e) => setNewLabel(e.target.value)}
+                                className="text-sm h-8 bg-white/10 border-white/20"
+                                onKeyDown={(e) => {
+                                  if (e.key === 'Enter') {
+                                    handleAddLabel(purchase.id);
+                                  }
+                                }}
+                              />
+                              <Button
+                                size="sm"
+                                className="h-8 bg-gradient-to-r from-indigo-600 to-blue-600"
+                                onClick={() => handleAddLabel(purchase.id)}
+                              >
+                                <Plus className="h-3 w-3 mr-1" />
+                                Add
+                              </Button>
+                            </div>
+                          </div>
+                        )}
+                      </motion.div>
+                    ))}
+                  </div>
+                </div>
               ))}
             </div>
           ) : (
