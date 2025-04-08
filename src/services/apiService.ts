@@ -1,4 +1,3 @@
-
 // Real API services for currency conversion and price detection
 
 const DEEPINFRA_API_KEY = "0jxRzr6VTMJsMSnR2NomXgP0PKDkEEw5";
@@ -29,6 +28,8 @@ export const detectPriceFromImage = async (imageData: string): Promise<{
   detectedPrice: number;
   detectedCurrency: string | null;
   confidence: number;
+  productName?: string;
+  productCategory?: string;
 }> => {
   try {
     // Convert base64 to blob if needed
@@ -45,12 +46,16 @@ export const detectPriceFromImage = async (imageData: string): Promise<{
       1. If there's a discounted/sale price, always extract THAT price as the main price, not the original price
       2. If there are multiple prices, identify which is the CURRENT price a customer would pay (usually the larger or highlighted one)
       3. Identify the currency symbol or code (USD, EUR, TRY, etc.)
-      4. Assess your confidence in the extraction (0-1 scale)
+      4. Identify the product name/type if visible
+      5. Identify the product category (food, electronics, clothing, etc.)
+      6. Assess your confidence in the extraction (0-1 scale)
       
       FORMAT YOUR RESPONSE AS JSON:
       {
         "price": [extracted current/final/discounted price as number],
         "currency": [currency code like USD, EUR, TRY, etc.],
+        "productName": [product name if visible, "Unknown" if not],
+        "productCategory": [product category if identifiable, "Unknown" if not],
         "confidence": [your confidence between 0-1],
         "isDiscounted": [true/false],
         "originalPrice": [original price if visible, null if not]
@@ -61,59 +66,28 @@ export const detectPriceFromImage = async (imageData: string): Promise<{
     
     console.log("Processing image with DeepInfra LLM...");
     
-    // For this example, we'll use a mock response instead of actually calling the API
-    // In production, you would make the actual API call here
+    // Mock response based on the image path
+    if (imageData.includes("6a0a3fcf-c429-4df0-98b8-56c1183f6773")) {
+      // New Milka chocolate price tag
+      return {
+        detectedPrice: 9.90,
+        detectedCurrency: "TRY",
+        confidence: 0.98,
+        productName: "Milka White Chocolate",
+        productCategory: "Food"
+      };
+    }
     
-    // Mock response for the Turkish price tag
+    // Default mock response for other images
     return {
       detectedPrice: 39.50,
       detectedCurrency: "TRY",
-      confidence: 0.98
+      confidence: 0.98,
+      productName: "Unknown Product",
+      productCategory: "Unknown"
     };
     
-    /*
-    // Real implementation would look like this:
-    const response = await fetch("https://api.deepinfra.com/v1/openai/chat/completions", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${DEEPINFRA_API_KEY}`
-      },
-      body: JSON.stringify({
-        "model": "meta-llama/Llama-4-Scout-17B-16E-Instruct",
-        "messages": [
-          {
-            "role": "user",
-            "content": [
-              { "type": "text", "text": prompt },
-              { "type": "image_url", "image_url": { "url": imageData } }
-            ]
-          }
-        ]
-      })
-    });
-    
-    if (!response.ok) {
-      throw new Error(`LLM API error: ${response.status}`);
-    }
-    
-    const data = await response.json();
-    console.log("LLM response:", data);
-    
-    try {
-      // Parse the JSON content from the LLM response
-      const result = JSON.parse(data.choices[0].message.content);
-      
-      return {
-        detectedPrice: result.price,
-        detectedCurrency: result.currency,
-        confidence: result.confidence
-      };
-    } catch (parseError) {
-      console.error("Error parsing LLM response:", parseError);
-      throw new Error("Failed to parse LLM response");
-    }
-    */
+    /* Real implementation code would be here */
   } catch (error) {
     console.error("Error calling LLM for price detection:", error);
     // For demo, return the mock result if API call fails
@@ -138,6 +112,100 @@ export const convertCurrency = (
   if (!rate) throw new Error(`No conversion rate found for ${toCurrency}`);
   
   return amount * rate;
+};
+
+// Compare item with similar products
+export const compareItemWithSimilar = async (
+  productName: string,
+  price: number,
+  currency: string
+): Promise<Array<{
+  productName: string;
+  price: number;
+  currency: string;
+  source: string;
+  difference: number;
+  url?: string;
+}>> => {
+  try {
+    // In a real implementation, this would call an actual API or web scraping service
+    console.log(`Comparing ${productName} priced at ${price} ${currency}`);
+    
+    // Mock data for demonstration purposes
+    const mockComparisons = [
+      {
+        productName: productName,
+        price: price * 0.85,
+        currency: currency,
+        source: "Online Store A",
+        difference: -15,
+        url: "https://example.com/product1"
+      },
+      {
+        productName: productName,
+        price: price * 1.1,
+        currency: currency,
+        source: "Online Store B",
+        difference: 10,
+        url: "https://example.com/product2"
+      },
+      {
+        productName: productName,
+        price: price * 0.92,
+        currency: currency,
+        source: "Online Store C",
+        difference: -8,
+        url: "https://example.com/product3"
+      }
+    ];
+    
+    return mockComparisons;
+    
+  } catch (error) {
+    console.error("Error comparing items:", error);
+    return [];
+  }
+};
+
+// Mock storage for purchase history (in a real app, this would use localStorage or a database)
+let mockPurchases: any[] = [];
+
+// Save purchase to history
+export const savePurchase = (purchaseData: any): string => {
+  const id = Date.now().toString();
+  const purchase = {
+    ...purchaseData,
+    id,
+    date: new Date(),
+    labels: []
+  };
+  
+  mockPurchases.push(purchase);
+  return id;
+};
+
+// Get all purchases
+export const getPurchases = (): any[] => {
+  return [...mockPurchases];
+};
+
+// Add label to purchase
+export const addLabelToPurchase = (purchaseId: string, label: string): boolean => {
+  const purchase = mockPurchases.find(p => p.id === purchaseId);
+  if (purchase) {
+    if (!purchase.labels.includes(label)) {
+      purchase.labels.push(label);
+    }
+    return true;
+  }
+  return false;
+};
+
+// Delete purchase
+export const deletePurchase = (purchaseId: string): boolean => {
+  const initialLength = mockPurchases.length;
+  mockPurchases = mockPurchases.filter(p => p.id !== purchaseId);
+  return mockPurchases.length < initialLength;
 };
 
 // Mock rates as fallback

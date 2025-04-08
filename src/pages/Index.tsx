@@ -1,13 +1,21 @@
 
 import React, { useState, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { toast } from 'sonner';
-import { Camera, RefreshCw, ArrowLeft } from "lucide-react";
+import { Camera, RefreshCw, ArrowLeft, User, CircleDollarSign } from "lucide-react";
 import CameraCapture from '@/components/Camera';
 import CurrencySelector from '@/components/CurrencySelector';
 import AROverlay from '@/components/AROverlay';
 import LandingPage from '@/components/LandingPage';
-import { detectPriceFromImage, fetchCurrencyRates, convertCurrency } from '@/services/apiService';
+import ItemComparison from '@/components/ItemComparison';
+import { 
+  detectPriceFromImage, 
+  fetchCurrencyRates, 
+  convertCurrency, 
+  compareItemWithSimilar,
+  savePurchase
+} from '@/services/apiService';
 
 enum AppStep {
   WELCOME,
@@ -15,7 +23,8 @@ enum AppStep {
   CAMERA,
   CURRENCY_SELECT,
   PROCESSING,
-  RESULT
+  RESULT,
+  COMPARING
 }
 
 const Index = () => {
@@ -28,11 +37,18 @@ const Index = () => {
   const [conversionRate, setConversionRate] = useState<number>(1);
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
   const [isLiveDetection, setIsLiveDetection] = useState<boolean>(false);
+  const [productName, setProductName] = useState<string>("Unknown Product");
+  const [productCategory, setProductCategory] = useState<string>("Unknown");
+  const [isComparisonOpen, setIsComparisonOpen] = useState<boolean>(false);
+  const [comparisons, setComparisons] = useState<any[]>([]);
   const [liveDetectionData, setLiveDetectionData] = useState<{
     image: string;
     price: number;
     currency: string;
+    productName?: string;
   } | null>(null);
+  
+  const navigate = useNavigate();
 
   const handleImageCapture = async (imageData: string) => {
     setCapturedImage(imageData);
@@ -43,6 +59,15 @@ const Index = () => {
       // Call LLM API to detect price and currency
       const result = await detectPriceFromImage(imageData);
       setDetectedPrice(result.detectedPrice);
+      
+      // Set product details if available
+      if (result.productName) {
+        setProductName(result.productName);
+      }
+      
+      if (result.productCategory) {
+        setProductCategory(result.productCategory);
+      }
       
       if (result.detectedCurrency) {
         setSourceCurrency(result.detectedCurrency);
@@ -74,7 +99,8 @@ const Index = () => {
         setLiveDetectionData({
           image: imageData,
           price: result.detectedPrice,
-          currency: result.detectedCurrency
+          currency: result.detectedCurrency,
+          productName: result.productName
         });
         
         // Get conversion rate in background
@@ -137,11 +163,61 @@ const Index = () => {
     }
   };
 
+  const handleSavePurchase = () => {
+    if (!capturedImage || detectedPrice === null || convertedPrice === null) {
+      toast.error("Missing purchase information");
+      return;
+    }
+    
+    try {
+      const purchaseId = savePurchase({
+        productName,
+        originalPrice: detectedPrice,
+        originalCurrency: sourceCurrency,
+        convertedPrice,
+        targetCurrency,
+        imageUrl: capturedImage
+      });
+      
+      toast.success("Purchase saved to your history");
+    } catch (error) {
+      console.error("Error saving purchase:", error);
+      toast.error("Failed to save purchase");
+    }
+  };
+
+  const handleCompareItem = async () => {
+    if (!productName || detectedPrice === null) {
+      toast.error("Product information not available for comparison");
+      return;
+    }
+    
+    setIsProcessing(true);
+    
+    try {
+      const comparisonResults = await compareItemWithSimilar(
+        productName,
+        detectedPrice,
+        sourceCurrency
+      );
+      
+      setComparisons(comparisonResults);
+      setIsComparisonOpen(true);
+    } catch (error) {
+      console.error("Error comparing item:", error);
+      toast.error("Failed to compare prices");
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
   const resetToCamera = () => {
     setCapturedImage(null);
     setDetectedPrice(null);
     setConvertedPrice(null);
     setLiveDetectionData(null);
+    setProductName("Unknown Product");
+    setProductCategory("Unknown");
     setCurrentStep(AppStep.CAMERA);
   };
 
@@ -152,6 +228,8 @@ const Index = () => {
     setSourceCurrency("");
     setTargetCurrency("USD");
     setLiveDetectionData(null);
+    setProductName("Unknown Product");
+    setProductCategory("Unknown");
     setCurrentStep(AppStep.LANDING);
   };
 
@@ -161,16 +239,26 @@ const Index = () => {
       {currentStep !== AppStep.LANDING && (
         <header className="p-4 flex items-center justify-between backdrop-blur-md bg-background/80 border-b border-border/30 sticky top-0 z-50">
           <h1 className="text-2xl font-bold text-gradient-primary">Price Tag Alchemy</h1>
-          {currentStep !== AppStep.WELCOME && (
+          <div className="flex items-center space-x-2">
             <Button 
               variant="outline" 
               size="icon"
-              onClick={resetToWelcome}
+              onClick={() => navigate('/profile')}
               className="rounded-full bg-white/10 border-white/20 hover:bg-white/20"
             >
-              <ArrowLeft className="h-5 w-5" />
+              <User className="h-5 w-5" />
             </Button>
-          )}
+            {currentStep !== AppStep.WELCOME && (
+              <Button 
+                variant="outline" 
+                size="icon"
+                onClick={resetToWelcome}
+                className="rounded-full bg-white/10 border-white/20 hover:bg-white/20"
+              >
+                <ArrowLeft className="h-5 w-5" />
+              </Button>
+            )}
+          </div>
         </header>
       )}
       
@@ -230,6 +318,13 @@ const Index = () => {
         
         {currentStep === AppStep.RESULT && capturedImage && detectedPrice !== null && convertedPrice !== null && (
           <div className="animate-fade-in p-4">
+            <div className="mb-4 text-center">
+              <h2 className="text-xl font-bold">{productName}</h2>
+              {productCategory !== "Unknown" && (
+                <p className="text-sm text-muted-foreground">{productCategory}</p>
+              )}
+            </div>
+            
             <AROverlay 
               originalImage={capturedImage}
               originalCurrency={sourceCurrency}
@@ -237,6 +332,9 @@ const Index = () => {
               originalPrice={detectedPrice}
               convertedPrice={convertedPrice}
               conversionRate={conversionRate}
+              productName={productName}
+              onSavePurchase={handleSavePurchase}
+              onCompareItem={handleCompareItem}
             />
             
             <div className="mt-6 flex space-x-4 max-w-md mx-auto">
@@ -256,7 +354,41 @@ const Index = () => {
             </div>
           </div>
         )}
+        
+        {/* Live detection overlay */}
+        {liveDetectionData && (
+          <div className="fixed bottom-4 left-4 right-4 bg-gradient-to-r from-gray-900/80 to-black/80 backdrop-blur-md rounded-lg border border-white/20 p-3 shadow-xl z-40">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center">
+                <CircleDollarSign className="h-5 w-5 text-primary mr-2" />
+                <div>
+                  <div className="text-xs text-white/70">Detected Price:</div>
+                  <div className="font-bold">
+                    {liveDetectionData.price} {liveDetectionData.currency}
+                  </div>
+                </div>
+              </div>
+              <Button
+                size="sm"
+                className="bg-gradient-to-r from-emerald-600 to-teal-600 text-xs"
+                onClick={() => handleImageCapture(liveDetectionData.image)}
+              >
+                Capture Now
+              </Button>
+            </div>
+          </div>
+        )}
       </main>
+      
+      {/* Item comparison modal */}
+      <ItemComparison
+        isOpen={isComparisonOpen}
+        onClose={() => setIsComparisonOpen(false)}
+        productName={productName}
+        price={detectedPrice || 0}
+        currency={sourceCurrency}
+        comparisons={comparisons}
+      />
     </div>
   );
 };

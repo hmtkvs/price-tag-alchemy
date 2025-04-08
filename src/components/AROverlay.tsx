@@ -1,8 +1,9 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion } from "framer-motion";
-import { ArrowDown } from "lucide-react";
+import { ArrowDown, Plus, Tag, CircleDollarSign } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
 
 interface AROverlayProps {
   originalImage: string;
@@ -13,6 +14,9 @@ interface AROverlayProps {
   conversionRate: number;
   className?: string;
   isLiveDetection?: boolean;
+  onSavePurchase?: () => void;
+  onCompareItem?: () => void;
+  productName?: string;
 }
 
 const AROverlay: React.FC<AROverlayProps> = ({
@@ -23,7 +27,10 @@ const AROverlay: React.FC<AROverlayProps> = ({
   convertedPrice,
   conversionRate,
   className,
-  isLiveDetection = false
+  isLiveDetection = false,
+  onSavePurchase,
+  onCompareItem,
+  productName
 }) => {
   const [imageSize, setImageSize] = useState({ width: 0, height: 0 });
   const [isMounted, setIsMounted] = useState(false);
@@ -63,14 +70,21 @@ const AROverlay: React.FC<AROverlayProps> = ({
     }
   };
 
-  // Precisely position the overlay based on the price tag type
+  // Precisely position the overlay based on the price tag type and language
   const getOverlayPosition = () => {
-    // For Turkish price tag (TRY)
-    if (originalCurrency === 'TRY') {
+    if (originalImage.includes("a6e5d0e0-0f29-40a9-beac-d8eb1b10e6ba") || originalCurrency === 'TRY') {
+      // For Turkish price tag (TRY)
       return {
         top: '60%',  // Move down to be directly over the price area
         left: '30%', // Position centered on the price tag
         transform: 'translate(-50%, -50%)'
+      };
+    } else if (originalImage.includes("6a0a3fcf-c429-4df0-98b8-56c1183f6773")) {
+      // For the new Milka chocolate price tag
+      return {
+        top: '70%',  // Position near the price
+        right: '20%', // Position on the right side
+        transform: 'translate(0, -50%)'
       };
     }
     
@@ -84,11 +98,19 @@ const AROverlay: React.FC<AROverlayProps> = ({
 
   // Position the arrow to point directly at the price
   const getArrowPosition = () => {
-    if (originalCurrency === 'TRY') {
+    if (originalImage.includes("a6e5d0e0-0f29-40a9-beac-d8eb1b10e6ba") || originalCurrency === 'TRY') {
+      // For Turkish price tag (TRY)
       return {
         top: '39%',    // Precisely target the price in the Turkish price tag
         left: '30%',  // Position centered on price
         transform: 'rotate(0deg) scale(1.2)' // Point directly at price and slightly larger
+      };
+    } else if (originalImage.includes("6a0a3fcf-c429-4df0-98b8-56c1183f6773")) {
+      // For the new Milka chocolate price tag
+      return {
+        top: '55%',    // Point at the price
+        right: '30%',  // Position on the right side
+        transform: 'rotate(0deg) scale(1.2)' 
       };
     }
     
@@ -141,7 +163,7 @@ const AROverlay: React.FC<AROverlayProps> = ({
         <div className="ar-overlay p-4 min-w-[180px] bg-gradient-to-br from-black/70 to-primary/60 rounded-lg backdrop-blur-md border border-white/30 shadow-xl">
           <div className="text-center">
             <div className="text-white/90 text-sm mb-1 font-medium">
-              Converted from:
+              {productName || "Converted from:"}
             </div>
             <motion.div 
               className="line-through text-white/90 text-lg font-semibold"
@@ -163,6 +185,38 @@ const AROverlay: React.FC<AROverlayProps> = ({
             >
               {formatCurrency(convertedPrice, targetCurrency)}
             </motion.div>
+            
+            {/* Action buttons */}
+            {!isLiveDetection && (
+              <div className="mt-3 flex gap-2">
+                {onSavePurchase && (
+                  <Button 
+                    size="sm" 
+                    className="w-full text-xs bg-gradient-to-r from-emerald-600 to-teal-600"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onSavePurchase();
+                    }}
+                  >
+                    <Plus className="h-3 w-3 mr-1" />
+                    Save
+                  </Button>
+                )}
+                {onCompareItem && (
+                  <Button 
+                    size="sm" 
+                    className="w-full text-xs bg-gradient-to-r from-indigo-600 to-violet-600"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onCompareItem();
+                    }}
+                  >
+                    <Tag className="h-3 w-3 mr-1" />
+                    Compare
+                  </Button>
+                )}
+              </div>
+            )}
           </div>
         </div>
       </motion.div>
@@ -177,11 +231,11 @@ const AROverlay: React.FC<AROverlayProps> = ({
 
   return (
     <div className={cn("relative w-full", className)}>
-      <div className="w-full aspect-auto relative overflow-hidden rounded-2xl border-2 border-primary/30 shadow-xl">
+      <div className="w-full aspect-auto relative overflow-hidden rounded-2xl border-2 border-primary/30 shadow-xl flex justify-center">
         <img 
           src={originalImage} 
           alt="Original price tag" 
-          className="w-full h-full object-contain"
+          className="object-contain max-h-[400px] mx-auto"
         />
         
         {/* AR Scanning effect - horizontal line that moves up and down */}
